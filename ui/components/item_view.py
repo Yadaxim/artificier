@@ -6,7 +6,16 @@ from uuid import UUID
 import streamlit as st
 
 from core.generation import generate_item_from_seed, interpret_item
-from ui.state import get_campaign_id, get_manager, get_selected_item_id, set_selected_item_id, set_view_kind
+from ui.state import (
+    clear_pending_delete,
+    get_campaign_id,
+    get_manager,
+    get_pending_delete,
+    get_selected_item_id,
+    set_pending_delete,
+    set_selected_item_id,
+    set_view_kind,
+)
 
 
 def render_items_list() -> None:
@@ -16,15 +25,32 @@ def render_items_list() -> None:
         st.info("Select a campaign.")
         return
     items = manager.get_items_in_campaign(campaign_id)
+    items = sorted(items, key=lambda i: i.created_at, reverse=True)
+    pending = get_pending_delete()
     if not items:
         st.info("No items yet. Create one below.")
     else:
         for it in items:
             st.write(f"**{it.name}** — {it.item_type.value} {it.rarity.value}")
-            if st.button("View", key=f"view_item_{it.id}"):
-                set_selected_item_id(it.id)
-                set_view_kind("item_single")
-                st.rerun()
+            if pending and pending.get("kind") == "item" and pending.get("id") == str(it.id):
+                st.warning("Delete this item?")
+                if st.button("Cancel", key=f"cancel_del_item_{it.id}"):
+                    clear_pending_delete()
+                    st.rerun()
+                if st.button("Yes, delete", key=f"confirm_del_item_{it.id}", type="primary"):
+                    manager.delete_item(it.id)
+                    if get_selected_item_id() == it.id:
+                        set_selected_item_id(None)
+                    clear_pending_delete()
+                    st.rerun()
+            else:
+                if st.button("View", key=f"view_item_{it.id}"):
+                    set_selected_item_id(it.id)
+                    set_view_kind("item_single")
+                    st.rerun()
+                if st.button("Delete", key=f"del_item_{it.id}"):
+                    set_pending_delete("item", it.id, it.name, "")
+                    st.rerun()
     if st.button("Create Item"):
         set_view_kind("item_new")
         st.session_state.pop("item_interpret_result", None)

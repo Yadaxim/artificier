@@ -5,6 +5,7 @@ from uuid import UUID
 
 import streamlit as st
 
+from core.generation import generate_room
 from core.state_manager import WorldStateManager
 from models.models import EdgeType
 
@@ -22,6 +23,9 @@ def render_room_single() -> None:
     if not room:
         st.error("Room not found.")
         return
+    room_not_generated = not (room.description or room.read_aloud)
+    if room_not_generated:
+        _render_generate_room_cta(manager, room)
     play_mode = get_mode() == "Play"
     if play_mode:
         _render_room_play(manager, room)
@@ -63,6 +67,29 @@ def _render_room_play(manager: WorldStateManager, room) -> None:
         manager.update_room(room)
         st.success("Event recorded.")
         st.rerun()
+
+
+def _render_generate_room_cta(manager: WorldStateManager, room) -> None:
+    """Show generate button when room has no description/read_aloud yet."""
+    dungeon_id = get_selected_dungeon_id()
+    if not dungeon_id:
+        edges = manager.get_edges_to(room.id, EdgeType.CONTAINS)
+        if edges:
+            dungeon_id = edges[0].source_id
+    if dungeon_id:
+        st.info("This room has not been fully generated yet. Generate description, read-aloud text, and DM notes.")
+        if st.button("Generate room", key="room_single_generate"):
+            with st.spinner("Generating room..."):
+                try:
+                    all_rooms = manager.get_rooms_in_dungeon(dungeon_id)
+                    already_generated = [r.id for r in all_rooms if r.id != room.id and (r.description or r.read_aloud)]
+                    generate_room(manager, dungeon_id, room.id, already_generated)
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
+    else:
+        st.warning("Could not determine this room's dungeon. Open the room from the dungeon view and try again.")
+    st.divider()
 
 
 def _render_room_create(manager: WorldStateManager, room) -> None:

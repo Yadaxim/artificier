@@ -9,7 +9,7 @@ from core.generation import generate_room, generate_topology, interpret_dungeon,
 from core.state_manager import WorldStateManager
 from models.models import Campaign, Dungeon, Edge, EdgeType
 
-from ui.state import get_campaign_id, get_manager, set_view_kind
+from ui.state import get_campaign_id, get_manager, set_selected_dungeon_id, set_view_kind
 
 
 def render_dungeon_form() -> None:
@@ -155,6 +155,18 @@ def _step_seed_rooms(manager: WorldStateManager, campaign_id) -> None:
         return
 
     floor_index = st.session_state.get("dungeon_seed_floor_index", 0)
+
+    st.markdown("**Planned floors**")
+    for i, f in enumerate(floors):
+        label = f"Level {f.get('level_number', 0)}: {f.get('name', 'Floor')} — {f.get('theme', '')} ({f.get('room_count', 0)} rooms)"
+        if i < floor_index:
+            st.caption(f"✓ {label} (seeded)")
+        elif i == floor_index:
+            st.caption(f"→ **{label}** (current)")
+        else:
+            st.caption(f"○ {label}")
+    st.divider()
+
     if floor_index >= len(floors):
         st.success("All floors seeded. Generate topology next.")
         if st.button("Generate topology"):
@@ -167,9 +179,10 @@ def _step_seed_rooms(manager: WorldStateManager, campaign_id) -> None:
     if st.button("Seed rooms for this floor"):
         with st.spinner("Seeding rooms..."):
             try:
-                created = seed_rooms(manager, campaign_id, dungeon_id, floor)
-                st.success(f"Created {len(created)} rooms.")
+                seed_rooms(manager, campaign_id, dungeon_id, floor)
                 st.session_state["dungeon_seed_floor_index"] = floor_index + 1
+                set_selected_dungeon_id(dungeon_id)
+                set_view_kind("dungeon_single")
                 st.rerun()
             except Exception as e:
                 st.error(str(e))

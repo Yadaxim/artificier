@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 
 # --- Enums ---
@@ -119,6 +119,10 @@ class Dungeon(BaseNode):
     level_range: str = ""
     status: DungeonStatus = DungeonStatus.UNVISITED
 
+    @field_serializer("status")
+    def _serialize_status(self, v: DungeonStatus) -> str:
+        return v.value
+
 
 # --- Room ---
 
@@ -139,6 +143,10 @@ class Room(BaseNode):
     encounter_seeds: list[str] = Field(default_factory=list)
     references_rooms: list[str] = Field(default_factory=list)
 
+    @field_serializer("status")
+    def _serialize_status(self, v: RoomStatus) -> str:
+        return v.value
+
 
 # --- Town ---
 
@@ -151,6 +159,10 @@ class Town(BaseNode):
     history: str = ""
     world_context: str = ""
     dominant_faction: str = ""
+
+    @field_serializer("population_size")
+    def _serialize_population_size(self, v: PopulationSize) -> str:
+        return v.value
 
 
 # --- Location ---
@@ -192,6 +204,10 @@ class NPC(BaseNode):
     spells: Optional[dict[str, Any]] = None
     status: NPCStatus = NPCStatus.ALIVE
 
+    @field_serializer("status")
+    def _serialize_status(self, v: NPCStatus) -> str:
+        return v.value
+
 
 # --- Monster (5e stat block) ---
 
@@ -224,6 +240,10 @@ class Monster(BaseNode):
     tactics: str = ""
     status: MonsterStatus = MonsterStatus.ALIVE
 
+    @field_serializer("status")
+    def _serialize_status(self, v: MonsterStatus) -> str:
+        return v.value
+
 
 # --- Item ---
 
@@ -240,6 +260,12 @@ class Item(BaseNode):
     value: Optional[str] = None
     status: ItemStatus = ItemStatus.PRESENT
 
+    @field_serializer("item_type", "rarity", "status")
+    def _serialize_enums(self, v):
+        if hasattr(v, "value"):
+            return v.value
+        return v
+
 
 # --- Edge ---
 
@@ -252,6 +278,10 @@ class Edge(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"populate_by_name": True}
+
+    @field_serializer("edge_type")
+    def _serialize_edge_type(self, v: EdgeType) -> str:
+        return v.value
 
 
 # --- WorldState ---

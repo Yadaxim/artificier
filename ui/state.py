@@ -97,9 +97,22 @@ def set_selected_item_id(item_id: UUID | None) -> None:
 
 
 def get_view_kind() -> str:
-    """One of: campaign_home, dungeons, dungeon_new, dungeon_single, room_single, towns, town_new, town_single, location_single, npcs, npc_single, monsters, monster_single, items, item_single."""
-    return st.session_state.get("view_kind", "campaign_home")
+    """One of: campaigns, campaign_home, dungeons, dungeon_new, dungeon_single, room_single, towns, town_new, town_single, location_single, npcs, npc_single, monsters, monster_single, items, item_single."""
+    return st.session_state.get("view_kind", "campaigns")
 
 
 def set_view_kind(kind: str) -> None:
     st.session_state["view_kind"] = kind
+
+
+def get_pending_delete() -> dict | None:
+    """Pending delete confirmation: {kind, id, name, detail} or None."""
+    return st.session_state.get("pending_delete")
+
+
+def set_pending_delete(kind: str, id: UUID, name: str, detail: str = "") -> None:
+    st.session_state["pending_delete"] = {"kind": kind, "id": str(id), "name": name, "detail": detail}
+
+
+def clear_pending_delete() -> None:
+    st.session_state.pop("pending_delete", None)

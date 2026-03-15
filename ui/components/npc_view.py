@@ -6,7 +6,16 @@ from uuid import UUID
 import streamlit as st
 
 from core.generation import generate_npc_from_seed, interpret_npc
-from ui.state import get_campaign_id, get_manager, get_selected_npc_id, set_selected_npc_id, set_view_kind
+from ui.state import (
+    clear_pending_delete,
+    get_campaign_id,
+    get_manager,
+    get_pending_delete,
+    get_selected_npc_id,
+    set_pending_delete,
+    set_selected_npc_id,
+    set_view_kind,
+)
 
 
 def render_npcs_list() -> None:
@@ -16,15 +25,32 @@ def render_npcs_list() -> None:
         st.info("Select a campaign.")
         return
     npcs = manager.get_npcs_in_campaign(campaign_id)
+    npcs = sorted(npcs, key=lambda n: n.created_at, reverse=True)
+    pending = get_pending_delete()
     if not npcs:
         st.info("No NPCs yet. Create one below.")
     else:
         for n in npcs:
             st.write(f"**{n.name}** — {n.race}" + (f" {n.character_class}" if n.character_class else ""))
-            if st.button("View", key=f"view_npc_{n.id}"):
-                set_selected_npc_id(n.id)
-                set_view_kind("npc_single")
-                st.rerun()
+            if pending and pending.get("kind") == "npc" and pending.get("id") == str(n.id):
+                st.warning("Delete this NPC?")
+                if st.button("Cancel", key=f"cancel_del_npc_{n.id}"):
+                    clear_pending_delete()
+                    st.rerun()
+                if st.button("Yes, delete", key=f"confirm_del_npc_{n.id}", type="primary"):
+                    manager.delete_npc(n.id)
+                    if get_selected_npc_id() == n.id:
+                        set_selected_npc_id(None)
+                    clear_pending_delete()
+                    st.rerun()
+            else:
+                if st.button("View", key=f"view_npc_{n.id}"):
+                    set_selected_npc_id(n.id)
+                    set_view_kind("npc_single")
+                    st.rerun()
+                if st.button("Delete", key=f"del_npc_{n.id}"):
+                    set_pending_delete("npc", n.id, n.name, "")
+                    st.rerun()
     if st.button("Create NPC"):
         set_view_kind("npc_new")
         st.session_state.pop("npc_interpret_result", None)

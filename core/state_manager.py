@@ -262,6 +262,18 @@ class WorldStateManager:
         self._state.edges.pop(_str_id(edge_id), None)
         self.save()
 
+    def _remove_edges_involving(self, node_id: UUID) -> None:
+        """Remove all edges where source_id or target_id is node_id."""
+        self._ensure_state()
+        to_remove = [
+            e.id for e in self._state.edges.values()
+            if e.source_id == node_id or e.target_id == node_id
+        ]
+        for eid in to_remove:
+            self._state.edges.pop(_str_id(eid), None)
+        if to_remove:
+            self.save()
+
     def get_edges_from(self, source_id: UUID, edge_type: EdgeType | None = None) -> list[Edge]:
         self._ensure_state()
         out = [
@@ -360,6 +372,78 @@ class WorldStateManager:
         self._ensure_state()
         child_ids = [cid for coll, cid in self.get_children(campaign_id) if coll == "items"]
         return [self._state.items[_str_id(cid)] for cid in child_ids if _str_id(cid) in self._state.items]
+
+    # --- Cascade deletes ---
+
+    def delete_room(self, room_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(room_id)
+        self._state.rooms.pop(_str_id(room_id), None)
+        self.save()
+
+    def delete_dungeon(self, dungeon_id: UUID) -> None:
+        self._ensure_state()
+        for room in self.get_rooms_in_dungeon(dungeon_id):
+            self.delete_room(room.id)
+        self._remove_edges_involving(dungeon_id)
+        self._state.dungeons.pop(_str_id(dungeon_id), None)
+        self.save()
+
+    def delete_location(self, location_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(location_id)
+        self._state.locations.pop(_str_id(location_id), None)
+        self.save()
+
+    def delete_town(self, town_id: UUID) -> None:
+        self._ensure_state()
+        for loc in self.get_locations_in_town(town_id):
+            self.delete_location(loc.id)
+        self._remove_edges_involving(town_id)
+        self._state.towns.pop(_str_id(town_id), None)
+        self.save()
+
+    def delete_npc(self, npc_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(npc_id)
+        self._state.npcs.pop(_str_id(npc_id), None)
+        self.save()
+
+    def delete_monster(self, monster_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(monster_id)
+        self._state.monsters.pop(_str_id(monster_id), None)
+        self.save()
+
+    def delete_item(self, item_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(item_id)
+        self._state.items.pop(_str_id(item_id), None)
+        self.save()
+
+    def delete_campaign(self, campaign_id: UUID) -> None:
+        """Delete campaign and all nested content (dungeons/rooms, towns/locations, npcs, monsters, items). Removes the campaign file."""
+        self.load_campaign(campaign_id)
+        self._ensure_state()
+        children = self.get_children(campaign_id)
+        for coll, cid in children:
+            if coll == "dungeons":
+                self.delete_dungeon(cid)
+            elif coll == "towns":
+                self.delete_town(cid)
+            elif coll == "npcs":
+                self.delete_npc(cid)
+            elif coll == "monsters":
+                self.delete_monster(cid)
+            elif coll == "items":
+                self.delete_item(cid)
+        self._remove_edges_involving(campaign_id)
+        self._state.campaigns.pop(_str_id(campaign_id), None)
+        path = _campaign_path(campaign_id)
+        path.unlink(missing_ok=True)
+        if self._loaded_campaign_id == campaign_id:
+            self._state = None
+            self._loaded_campaign_id = None
 
     def _ensure_state(self) -> None:
         if self._state is None:

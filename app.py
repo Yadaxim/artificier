@@ -1,8 +1,8 @@
 """Streamlit entry point for Artificier."""
 
 import streamlit as st
-from uuid import UUID
 
+from ui.components.campaign_list import render_campaigns_list
 from ui.components.campaign_home import render_campaign_home
 from ui.components.dungeon_form import render_dungeon_form
 from ui.components.dungeon_view import render_dungeons_list, render_dungeon_single
@@ -14,6 +14,7 @@ from ui.components.room_view import render_room_single
 from ui.components.town_form import render_town_form
 from ui.components.town_view import render_towns_list, render_town_single
 from ui.state import (
+    get_campaign,
     get_campaign_id,
     get_manager,
     get_mode,
@@ -26,46 +27,13 @@ from ui.styles import inject_styles
 
 inject_styles()
 
-st.title("Artificier")
+campaign = get_campaign()
+title_suffix = f" · {campaign.name}" if campaign else ""
+st.title("Artificier" + title_suffix)
 
-# Sidebar: campaign selector, mode, tree
+# Sidebar: mode, navigation
 with st.sidebar:
-    st.subheader("Campaign")
     manager = get_manager()
-    existing_ids = manager.list_campaign_ids()
-    # Load each campaign to get its name for the dropdown
-    names = []
-    for cid in existing_ids:
-        manager.load_campaign(cid)
-        c = manager.get_campaign(cid)
-        names.append(c.name if c else "(Unnamed)")
-    options = ["(New campaign)"] + names
-    current = get_campaign_id()
-    idx = 0
-    if current and current in existing_ids:
-        idx = existing_ids.index(current) + 1
-    choice = st.selectbox(
-        "Select campaign",
-        options=options,
-        index=idx,
-        key="sidebar_campaign",
-    )
-    if choice == "(New campaign)":
-        new_name = st.text_input("Campaign name", key="new_campaign_name", placeholder="Enter name")
-        new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="new_campaign_pl")
-        if st.button("Create campaign") and new_name and new_name.strip():
-            from models.models import Campaign
-            c = Campaign(name=new_name.strip(), party_level=int(new_pl))
-            manager.ensure_loaded(c.id)
-            manager.create_campaign(c)
-            set_campaign_id(c.id)
-            st.rerun()
-    else:
-        choice_idx = options.index(choice)
-        if choice_idx > 0:
-            cid = existing_ids[choice_idx - 1]
-            if get_campaign_id() != cid:
-                set_campaign_id(cid)
     if get_campaign_id():
         manager.load_campaign(get_campaign_id())
 
@@ -75,6 +43,9 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Navigate")
+    if st.button("Campaigns"):
+        set_view_kind("campaigns")
+        st.rerun()
     if get_campaign_id():
         if st.button("Campaign home"):
             set_view_kind("campaign_home")
@@ -121,7 +92,9 @@ with st.sidebar:
 
 # Main panel
 view = get_view_kind()
-if view == "campaign_home":
+if view == "campaigns":
+    render_campaigns_list()
+elif view == "campaign_home":
     render_campaign_home()
 elif view == "dungeons":
     render_dungeons_list()
@@ -158,4 +131,4 @@ elif view == "item_new":
 elif view == "item_single":
     render_item_single()
 else:
-    render_campaign_home()
+    render_campaigns_list()
