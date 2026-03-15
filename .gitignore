@@ -24,6 +24,9 @@ build/
 # Streamlit
 .streamlit/secrets.toml
 
+# Data (campaign JSON files, etc.)
+data/
+
 # OS
 .DS_Store
 Thumbs.db
