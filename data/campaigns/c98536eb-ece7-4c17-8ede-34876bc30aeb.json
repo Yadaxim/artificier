@@ -1,0 +1,23 @@
+{
+  "campaigns": {
+    "c98536eb-ece7-4c17-8ede-34876bc30aeb": {
+      "id": "c98536eb-ece7-4c17-8ede-34876bc30aeb",
+      "created_at": "2026-03-15T17:06:59.740074",
+      "updated_at": "2026-03-15T17:06:59.740085",
+      "metadata": {},
+      "name": "AASS",
+      "description": "",
+      "party_level": 5,
+      "tone": "",
+      "setting_summary": ""
+    }
+  },
+  "dungeons": {},
+  "rooms": {},
+  "towns": {},
+  "locations": {},
+  "npcs": {},
+  "monsters": {},
+  "items": {},
+  "edges": {}
+}

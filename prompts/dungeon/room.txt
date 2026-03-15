@@ -1,0 +1,35 @@
+You are writing the full description for a single room in a D&D 5e dungeon. You have context about the dungeon, this floor, adjacent rooms, and one-line summaries of already-generated rooms (to avoid duplication and encourage cross-references).
+
+Generate: description (DM-facing prose), read_aloud (text to read to players), dm_notes, features (list of short strings), encounter_seeds (1-3 short descriptions of potential encounters for later expansion), and references_rooms (list of any room names you mention that exist in the dungeon).
+
+Return ONLY valid JSON with no markdown:
+
+{{
+  "description": "string (rich DM-facing prose)",
+  "read_aloud": "string (brief text to read to players)",
+  "dm_notes": "string",
+  "features": ["string", "string"],
+  "encounter_seeds": ["string", "string"],
+  "references_rooms": ["room name", "room name"]
+}}
+
+Dungeon: {dungeon_name}
+Concept: {dungeon_concept}
+Tone: {dungeon_tone}
+Level range: {level_range}
+
+This floor: {floor_name}, theme: {floor_theme}
+
+Room to describe:
+Name: {room_name}
+Purpose: {room_purpose}
+Atmosphere: {room_atmosphere}
+Construction era: {room_construction_era}
+
+Adjacent room seeds (for connection context):
+{adjacent_rooms}
+
+One-line summaries of already-generated rooms (avoid duplicating; you may reference them):
+{already_generated_summaries}
+
+---

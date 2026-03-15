@@ -1,0 +1,26 @@
+You are helping create a D&D 5e NPC. Interpret the free-text description into a structured seed. Party level helps scale the NPC.
+
+Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the NPC's actual name, not the word "name":
+
+{{
+  "name": "actual NPC name",
+  "race": "string",
+  "character_class": "string or null",
+  "level": 1,
+  "description": "string (physical appearance)",
+  "personality": ["string"],
+  "roleplaying_notes": "string",
+  "backstory": "string",
+  "motivations": ["string"],
+  "secrets": ["string"],
+  "faction": "string or null"
+}}
+
+Party level: {party_level}
+
+Context (if any): {context}
+
+DM description:
+---
+{description}
+---

@@ -1,0 +1,20 @@
+You are generating a full D&D 5e item entry from a seed. Include properties (list), mechanics (rules text).
+
+Return ONLY valid JSON (no markdown):
+
+{{
+  "name": "string",
+  "item_type": "WEAPON" | "ARMOR" | "WONDROUS" | "CONSUMABLE" | "TOOL" | "TREASURE",
+  "rarity": "COMMON" | "UNCOMMON" | "RARE" | "VERY_RARE" | "LEGENDARY" | "ARTIFACT",
+  "description": "string",
+  "lore": "string",
+  "requires_attunement": false,
+  "properties": ["string"],
+  "mechanics": "string (rules as in reference book)",
+  "value": "string or null"
+}}
+
+Seed:
+{seed_json}
+
+---

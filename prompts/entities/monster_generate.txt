@@ -1,0 +1,36 @@
+You are generating a full D&D 5e monster stat block (Monster Manual style) from a seed. Include ability_scores, armor_class, hit_points (dice expression string), hit_points_avg, speed, skills, saving_throws, damage_resistances, damage_immunities, condition_immunities, senses, languages, challenge_rating, proficiency_bonus, special_abilities (list of {name, description}), actions (list of {name, description, attack_bonus, damage}). Optionally bonus_actions, reactions, legendary_actions.
+
+Return ONLY valid JSON (no markdown).
+
+{{
+  "name": "string",
+  "creature_type": "string",
+  "size": "string",
+  "alignment": "string",
+  "ability_scores": {{"STR": 10, "..."}},
+  "armor_class": 10,
+  "hit_points": "10d8+20",
+  "hit_points_avg": 65,
+  "speed": "30 ft.",
+  "skills": {{}},
+  "saving_throws": [],
+  "damage_resistances": [],
+  "damage_immunities": [],
+  "condition_immunities": [],
+  "senses": "darkvision 60 ft.",
+  "languages": "Common",
+  "challenge_rating": "1/2",
+  "proficiency_bonus": 2,
+  "special_abilities": [{{"name": "string", "description": "string"}}],
+  "actions": [{{"name": "string", "description": "string", "attack_bonus": 5, "damage": "2d6+3 slashing"}}],
+  "bonus_actions": [],
+  "reactions": [],
+  "legendary_actions": [],
+  "description": "string",
+  "tactics": "string"
+}}
+
+Seed:
+{seed_json}
+
+---

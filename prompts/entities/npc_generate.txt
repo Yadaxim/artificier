@@ -1,0 +1,31 @@
+You are generating a full D&D 5e NPC character sheet from a seed. Include ability_scores (STR/DEX/CON/INT/WIS/CHA), saving_throws, skills, armor_class, hit_points, speed, features_and_traits, equipment. Optionally spells.
+
+Return ONLY valid JSON (no markdown). Use the same field names as the NPC model; numbers for ability_scores and armor_class, hit_points.
+
+{{
+  "name": "string",
+  "race": "string",
+  "character_class": "string or null",
+  "level": 1,
+  "description": "string",
+  "personality": ["string"],
+  "roleplaying_notes": "string",
+  "backstory": "string",
+  "motivations": ["string"],
+  "secrets": ["string"],
+  "faction": "string or null",
+  "ability_scores": {{"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10}},
+  "saving_throws": ["string"],
+  "skills": {{"Acrobatics": 0, "..." : 0}},
+  "armor_class": 10,
+  "hit_points": 10,
+  "speed": "30 ft.",
+  "features_and_traits": ["string"],
+  "equipment": ["string"],
+  "spells": null or {{}}
+}}
+
+Seed (DM may have edited):
+{seed_json}
+
+---

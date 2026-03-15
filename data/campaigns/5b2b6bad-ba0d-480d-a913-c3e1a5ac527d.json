@@ -1,0 +1,23 @@
+{
+  "campaigns": {
+    "5b2b6bad-ba0d-480d-a913-c3e1a5ac527d": {
+      "id": "5b2b6bad-ba0d-480d-a913-c3e1a5ac527d",
+      "created_at": "2026-03-15T16:43:01.215491",
+      "updated_at": "2026-03-15T16:43:01.215501",
+      "metadata": {},
+      "name": "New Campaign",
+      "description": "",
+      "party_level": 5,
+      "tone": "",
+      "setting_summary": ""
+    }
+  },
+  "dungeons": {},
+  "rooms": {},
+  "towns": {},
+  "locations": {},
+  "npcs": {},
+  "monsters": {},
+  "items": {},
+  "edges": {}
+}

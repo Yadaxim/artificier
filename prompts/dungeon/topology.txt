@@ -1,0 +1,24 @@
+You are generating the connection graph for a D&D 5e dungeon. Given a list of rooms with their vertical_connection hints, output which rooms connect to which and how (passage type and length).
+
+Passage types: DOOR, ARCHWAY, TUNNEL, CORRIDOR, LADDER, STAIRCASE, TRAPDOOR, CRACK, PORTAL.
+Length: "short", "medium", or "long".
+
+Respect vertical_connection: if a room has "up" it should connect upward (e.g. to a room on floor_level+1), "down" to floor_level-1, "both" to both. Rooms on the same floor connect with doors/corridors etc. as appropriate.
+
+Return ONLY valid JSON with no markdown:
+
+{{
+  "connections": [
+    {{
+      "from_room_id": "uuid-string",
+      "to_room_id": "uuid-string",
+      "passage_type": "DOOR" | "ARCHWAY" | "TUNNEL" | "CORRIDOR" | "LADDER" | "STAIRCASE" | "TRAPDOOR" | "CRACK" | "PORTAL",
+      "length": "short" | "medium" | "long"
+    }}
+  ]
+}}
+
+Rooms (id, name, floor_level, vertical_connection):
+{rooms_json}
+
+---

@@ -1,0 +1,26 @@
+You are generating location seeds for a D&D 5e town. Given the town and the suggested locations list, produce full location seeds.
+
+Each seed has: name, location_type, atmosphere, notable_features (list of short strings). description and dm_notes can be empty for now.
+
+Return ONLY valid JSON:
+
+{{
+  "locations": [
+    {{
+      "name": "string",
+      "location_type": "string",
+      "atmosphere": "string",
+      "notable_features": ["string", "string"]
+    }}
+  ]
+}}
+
+Town: {town_name}
+Concept: {town_concept}
+Tone: {town_tone}
+Population: {population_size}
+
+Suggested locations (name, type, theme):
+{suggested_locations}
+
+---

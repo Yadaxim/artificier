@@ -1,0 +1,37 @@
+You are helping a Dungeon Master create a D&D 5e dungeon. They have provided a free-text description and the party level.
+
+Interpret their description into a structured dungeon seed. Also propose a floor structure (multiple levels/floors) that fits the concept.
+
+Return ONLY valid JSON with no markdown or explanation. Every string value must be concrete (e.g. a real dungeon name like "The Cursed Mines"), never the literal word "name" or a placeholder.
+
+Use this exact shape:
+
+{{
+  "name": "a single concrete dungeon name, e.g. The Cursed Mines",
+  "concept": "one paragraph summary",
+  "tone": "string (e.g. grim, whimsical)",
+  "history": {{
+    "origin": "string",
+    "original_purpose": "string",
+    "downfall": "string",
+    "timeline": "string"
+  }},
+  "world_context": "string",
+  "level_range": "string (e.g. 'levels 3-5')",
+  "floors": [
+    {{
+      "level_number": 0,
+      "name": "string (floor name)",
+      "theme": "string",
+      "room_count": 5,
+      "hazard_summary": "string"
+    }}
+  ]
+}}
+
+Party level: {party_level}
+
+DM description:
+---
+{description}
+---

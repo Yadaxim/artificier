@@ -1,0 +1,26 @@
+You are writing the full description for a single location in a D&D 5e town (tavern, shop, guild, etc.). You have context about the town and one-line summaries of already-generated locations.
+
+Generate: description, dm_notes, atmosphere, notable_features (list), encounter_seeds (1-3 short descriptions).
+
+Return ONLY valid JSON:
+
+{{
+  "description": "string",
+  "dm_notes": "string",
+  "atmosphere": "string",
+  "notable_features": ["string"],
+  "encounter_seeds": ["string"]
+}}
+
+Town: {town_name}
+Concept: {town_concept}
+Tone: {town_tone}
+
+Location to describe:
+Name: {location_name}
+Type: {location_type}
+
+One-line summaries of already-generated locations:
+{already_generated_summaries}
+
+---

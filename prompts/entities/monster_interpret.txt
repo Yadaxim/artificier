@@ -1,0 +1,21 @@
+You are helping create a D&D 5e monster. Interpret the free-text into a structured seed. Party level helps with challenge.
+
+Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the monster's actual name:
+
+{{
+  "name": "actual monster name",
+  "creature_type": "string",
+  "size": "string",
+  "alignment": "string",
+  "description": "string (physical, lore)",
+  "tactics": "string"
+}}
+
+Party level: {party_level}
+
+Context (if any): {context}
+
+DM description:
+---
+{description}
+---

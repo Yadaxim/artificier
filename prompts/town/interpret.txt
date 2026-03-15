@@ -1,0 +1,25 @@
+You are helping a Dungeon Master create a D&D 5e town (or city/village). They have provided a free-text description and the party level.
+
+Interpret their description into a structured town seed and a suggested list of locations (shops, taverns, guilds, etc.).
+
+Return ONLY valid JSON with no markdown. Use concrete values (e.g. real town name), never the literal word "name":
+
+{{
+  "name": "concrete town name",
+  "concept": "string",
+  "tone": "string",
+  "population_size": "HAMLET" | "VILLAGE" | "TOWN" | "CITY",
+  "history": "string",
+  "world_context": "string",
+  "dominant_faction": "string",
+  "locations": [
+    {{ "name": "string", "location_type": "string", "theme": "string" }}
+  ]
+}}
+
+Party level: {party_level}
+
+DM description:
+---
+{description}
+---

@@ -1,0 +1,31 @@
+You are generating room seeds for a D&D 5e dungeon. Given the dungeon and floor metadata, produce a list of room seeds for the specified floor.
+
+Each room seed has: name, purpose, atmosphere, construction_era, floor_level, is_entrance (bool), is_boss_room (bool), vertical_connection ("up" | "down" | "both" | null).
+
+Return ONLY valid JSON with no markdown. Use this exact shape:
+
+{{
+  "rooms": [
+    {{
+      "name": "string",
+      "purpose": "string",
+      "atmosphere": "string",
+      "construction_era": "string",
+      "floor_level": 0,
+      "is_entrance": false,
+      "is_boss_room": false,
+      "vertical_connection": "up" | "down" | "both" | null
+    }}
+  ]
+}}
+
+Dungeon: {dungeon_name}
+Concept: {dungeon_concept}
+Level range: {level_range}
+
+Floor: {floor_name} (level_number={floor_level})
+Theme: {floor_theme}
+Room count: {room_count}
+Hazard summary: {hazard_summary}
+
+---

@@ -1,0 +1,20 @@
+You are helping create a D&D 5e item. Interpret the free-text into a structured seed.
+
+Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the item's actual name:
+
+{{
+  "name": "actual item name",
+  "item_type": "WEAPON" | "ARMOR" | "WONDROUS" | "CONSUMABLE" | "TOOL" | "TREASURE",
+  "rarity": "COMMON" | "UNCOMMON" | "RARE" | "VERY_RARE" | "LEGENDARY" | "ARTIFACT",
+  "description": "string",
+  "lore": "string",
+  "requires_attunement": false,
+  "value": "string or null"
+}}
+
+Context (if any): {context}
+
+DM description:
+---
+{description}
+---
