@@ -1,10 +1,10 @@
 """List dungeons and show single dungeon with rooms grouped by floor."""
 
-from uuid import UUID
-
+import graphviz
 import streamlit as st
 
-from core.generation import generate_room, seed_rooms
+from core.generation import generate_room, seed_dungeon_rooms
+from models.models import EdgeType
 from ui.state import (
     clear_pending_delete,
     get_campaign_id,
@@ -80,36 +80,32 @@ def render_dungeon_single() -> None:
         by_floor: dict[int, list] = {}
         for r in rooms:
             by_floor.setdefault(r.floor_level, []).append(r)
-        campaign_id = get_campaign_id()
         for idx, f in enumerate(planned_floors):
             lvl = f.get("level_number", 0)
             name = f.get("name", "Floor")
             theme = f.get("theme", "")
             count = f.get("room_count", 0)
             room_count = len(by_floor.get(lvl, []))
-            col_label, col_btn = st.columns([4, 1])
-            with col_label:
-                if room_count > 0:
-                    st.caption(f"- Level {lvl}: {name} — {theme} ({room_count}/{count} rooms seeded)")
-                else:
-                    st.caption(f"- Level {lvl}: {name} — {theme} ({count} rooms, not yet seeded)")
-            with col_btn:
-                if room_count == 0 and campaign_id:
-                    if st.button("Seed", key=f"seed_floor_{dungeon_id}_{idx}"):
-                        with st.spinner(f"Seeding {name}..."):
-                            try:
-                                seed_rooms(manager, campaign_id, dungeon_id, f)
-                                st.rerun()
-                            except Exception as e:
-                                st.error(str(e))
+            if room_count > 0:
+                st.caption(f"- Level {lvl}: {name} — {theme} ({room_count}/{count} rooms seeded)")
+            else:
+                st.caption(f"- Level {lvl}: {name} — {theme} ({count} rooms, not yet seeded)")
         st.divider()
-    if not rooms:
-        st.info("No rooms yet. Generate room seeds to create a floor plan.")
-        if st.button("Generate room seeds", key="dungeon_single_seed_rooms"):
-            st.session_state["dungeon_form_step"] = 2
-            st.session_state["dungeon_id_created"] = str(dungeon_id)
-            set_view_kind("dungeon_new")
-            st.rerun()
+
+    # Visual dungeon graph (rooms as nodes, passages as edges)
+    if rooms:
+        with st.expander("Dungeon graph (rooms and connections)", expanded=False):
+            _render_dungeon_graph(manager, dungeon_id, rooms)
+    if not rooms and planned_floors:
+        st.info("No rooms yet. Seed all dungeon rooms in one step.")
+        campaign_id = get_campaign_id()
+        if campaign_id and st.button("Seed all rooms", key="dungeon_single_seed_all"):
+            with st.spinner("Seeding all dungeon rooms..."):
+                try:
+                    seed_dungeon_rooms(manager, campaign_id, dungeon_id)
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
     by_floor_rooms: dict[int, list] = {}
     for r in rooms:
         by_floor_rooms.setdefault(r.floor_level, []).append(r)
@@ -122,7 +118,61 @@ def render_dungeon_single() -> None:
             col1, col2 = st.columns([3, 1])
             with col1:
                 status = "✓ generated" if generated else "○ not generated"
-                st.write(f"- **{r.name}**: {r.purpose} — *{status}*")
+                prefix = "[Entrance] " if r.is_entrance else ""
+                # Make room heading visually distinct
+                st.markdown(f"### {prefix}{r.name}")
+                st.caption(f"{r.purpose} — {status}")
+                # Topology: show connections involving this room (both directions)
+                out_conns = manager.get_connections(r.id, EdgeType.CONNECTS_TO)
+                in_conns = manager.get_edges_to(r.id, EdgeType.CONNECTS_TO)
+                connections = out_conns + [e for e in in_conns if e not in out_conns]
+                if connections:
+                    st.caption("Connections:")
+                    for e in connections:
+                        other_id = e.target_id if e.source_id == r.id else e.source_id
+                        target = manager.get_room(other_id)
+                        if not target:
+                            continue
+                        ptype = e.properties.get("passage_type", "?")
+                        length = e.properties.get("length", "?")
+                        # Include vertical direction if this is a cross-floor connection
+                        dir_part = ""
+                        if target.floor_level != r.floor_level:
+                            if target.floor_level > r.floor_level:
+                                dir_part = f"↑ to Floor {target.floor_level}"
+                            else:
+                                dir_part = f"↓ to Floor {target.floor_level}"
+                        extra = f"{ptype}, {length}"
+                        if dir_part:
+                            extra = f"{extra}, {dir_part}"
+                        st.write(f"  - {target.name} [{extra}]")
+                # Relationships: show inter-room logic links (both directions)
+                out_rels = manager.get_connections(r.id, EdgeType.RELATED_TO)
+                in_rels = manager.get_edges_to(r.id, EdgeType.RELATED_TO)
+                # Deduplicate by unordered pair of room IDs
+                relationships: list = []
+                seen_pairs: set[tuple[str, str]] = set()
+                for e in list(out_rels) + list(in_rels):
+                    a = str(e.source_id)
+                    b = str(e.target_id)
+                    pair = tuple(sorted((a, b)))
+                    if pair in seen_pairs:
+                        continue
+                    seen_pairs.add(pair)
+                    relationships.append(e)
+                if relationships:
+                    st.caption("Relationships:")
+                    for e in relationships:
+                        other_id = e.target_id if e.source_id == r.id else e.source_id
+                        target = manager.get_room(other_id)
+                        if not target:
+                            continue
+                        rtype = e.properties.get("type", "related")
+                        desc = e.properties.get("description")
+                        if desc:
+                            st.write(f"  - {rtype} → {target.name} ({desc})")
+                        else:
+                            st.write(f"  - {rtype} → {target.name}")
             with col2:
                 if pending and pending.get("kind") == "room" and pending.get("id") == str(r.id):
                     st.caption("Delete?")
@@ -159,3 +209,63 @@ def render_dungeon_single() -> None:
         set_selected_dungeon_id(None)
         set_view_kind("dungeons")
         st.rerun()
+
+
+def _render_dungeon_graph(manager, dungeon_id, rooms: list) -> None:
+    """Render per-floor graphs of rooms and their connections using Graphviz."""
+    if not rooms:
+        st.caption("No rooms to display yet.")
+        return
+
+    # Group rooms by floor level
+    by_floor: dict[int, list] = {}
+    for r in rooms:
+        by_floor.setdefault(r.floor_level, []).append(r)
+
+    for level in sorted(by_floor.keys()):
+        floor_rooms = by_floor[level]
+        st.markdown(f"**Floor {level}**")
+
+        dot = graphviz.Digraph()
+
+        # Nodes: label with name, entrance marker, plus vertical connection indicators
+        for r in floor_rooms:
+            vc = (r.metadata or {}).get("vertical_connection")
+            vc_label = ""
+            if vc == "up":
+                vc_label = "\\n↑ up"
+            elif vc == "down":
+                vc_label = "\\n↓ down"
+            elif vc == "both":
+                vc_label = "\\n↑↓ up & down"
+            entrance_label = "\\n[ENTRANCE]" if r.is_entrance else ""
+            label = f"{r.name}{entrance_label}{vc_label}"
+            dot.node(str(r.id), label=label, shape="box")
+
+        # Edges: only show connections where both rooms are on this floor
+        floor_ids = {r.id for r in floor_rooms}
+        seen: set[tuple[str, str]] = set()
+        for r in floor_rooms:
+            edges = manager.get_connections(r.id, EdgeType.CONNECTS_TO)
+            for e in edges:
+                if e.source_id not in floor_ids or e.target_id not in floor_ids:
+                    continue
+                key = (str(e.source_id), str(e.target_id))
+                if key in seen:
+                    continue
+                seen.add(key)
+                ptype = e.properties.get("passage_type", "")
+                length = e.properties.get("length", "")
+                src = manager.get_room(e.source_id)
+                tgt = manager.get_room(e.target_id)
+                dir_part = ""
+                if src and tgt and src.floor_level != tgt.floor_level:
+                    if tgt.floor_level > src.floor_level:
+                        dir_part = f"up to Floor {tgt.floor_level}"
+                    else:
+                        dir_part = f"down to Floor {tgt.floor_level}"
+                label_parts = [p for p in [ptype, length, dir_part] if p]
+                label = " / ".join(label_parts)
+                dot.edge(str(e.source_id), str(e.target_id), label=label)
+
+        st.graphviz_chart(dot)

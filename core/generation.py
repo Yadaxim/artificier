@@ -187,49 +187,49 @@ def interpret_dungeon(text: str, party_level: int) -> tuple[dict, str, dict]:
     return data, raw, debug
 
 
-def seed_rooms(
+def seed_dungeon_rooms(
     manager: WorldStateManager,
     campaign_id: UUID,
     dungeon_id: UUID,
-    floor_metadata: dict,
 ) -> list[Room]:
     """
-    Generate room seeds for one floor and create Room nodes + CONTAINS/PART_OF edges.
-    floor_metadata: level_number, name, theme, room_count, hazard_summary.
+    Generate room seeds for the entire dungeon (all floors) and create Room nodes
+    plus CONTAINS/PART_OF, CONNECTS_TO, and RELATED_TO edges.
     """
     dungeon = manager.get_dungeon(dungeon_id)
     if not dungeon:
         return []
-    ctx = get_floor_context(manager, dungeon_id, floor_metadata.get("level_number", 0))
+    floors = dungeon.metadata.get("floors") or []
+    floors_json = json.dumps(floors, indent=2)
+    ctx = get_floor_context(manager, dungeon_id, 0)
     prompt_tpl = _load_prompt("dungeon/rooms_seed.txt")
     prompt = prompt_tpl.format(
         dungeon_name=ctx.get("dungeon_name", dungeon.name),
         dungeon_concept=ctx.get("dungeon_concept", dungeon.concept),
         level_range=ctx.get("level_range", dungeon.level_range),
-        floor_name=floor_metadata.get("name", ""),
-        floor_level=floor_metadata.get("level_number", 0),
-        floor_theme=floor_metadata.get("theme", ""),
-        room_count=floor_metadata.get("room_count", 0),
-        hazard_summary=floor_metadata.get("hazard_summary", ""),
+        floors_json=floors_json,
     )
     client = _get_client()
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = (_get_response_text(response)[0] or "{}")
     data = json.loads(_clean_json(raw))
     rooms_data = data.get("rooms") or []
-    floor_level = floor_metadata.get("level_number", 0)
-    created = []
+    connections_data = data.get("connections") or []
+    relationships_data = data.get("relationships") or []
+    created: list[Room] = []
+    by_name: dict[str, Room] = {}
+    # Create rooms first
     for r in rooms_data:
         room = Room(
             name=r.get("name", "Unnamed"),
             purpose=r.get("purpose", ""),
             atmosphere=r.get("atmosphere", ""),
             construction_era=r.get("construction_era", ""),
-            floor_level=floor_level,
+            floor_level=r.get("floor_level", 0),
             is_entrance=r.get("is_entrance", False),
             is_boss_room=r.get("is_boss_room", False),
         )
@@ -242,6 +242,57 @@ def seed_rooms(
             Edge(source_id=room.id, target_id=dungeon_id, edge_type=EdgeType.PART_OF)
         )
         created.append(room)
+        if room.name:
+            by_name[room.name] = room
+
+    # Then create topology edges using room names from the seed response
+    for c in connections_data:
+        from_name = c.get("from_room_name")
+        to_name = c.get("to_room_name")
+        if not from_name or not to_name:
+            continue
+        from_room = by_name.get(from_name)
+        to_room = by_name.get(to_name)
+        if not from_room or not to_room:
+            continue
+        passage_type = c.get("passage_type", "DOOR")
+        length = c.get("length", "medium")
+        edge = Edge(
+            source_id=from_room.id,
+            target_id=to_room.id,
+            edge_type=EdgeType.CONNECTS_TO,
+            properties={"passage_type": passage_type, "length": length},
+        )
+        manager.add_edge(edge)
+
+    # And create inter-room relationship edges
+    for rel in relationships_data:
+        from_name = rel.get("from_room_name")
+        to_name = rel.get("to_room_name")
+        if not from_name or not to_name:
+            continue
+        from_room = by_name.get(from_name)
+        to_room = by_name.get(to_name)
+        if not from_room or not to_room:
+            continue
+        rel_type = rel.get("type", "related")
+        desc = rel.get("description", "")
+        edge = Edge(
+            source_id=from_room.id,
+            target_id=to_room.id,
+            edge_type=EdgeType.RELATED_TO,
+            properties={"type": rel_type, "description": desc},
+        )
+        manager.add_edge(edge)
+        # Add reverse edge so the relationship is naturally visible from both rooms
+        reverse_edge = Edge(
+            source_id=to_room.id,
+            target_id=from_room.id,
+            edge_type=EdgeType.RELATED_TO,
+            properties={"type": rel_type, "description": desc},
+        )
+        manager.add_edge(reverse_edge)
+
     return created
 
 

@@ -1,6 +1,27 @@
-You are generating room seeds for a D&D 5e dungeon. Given the dungeon and floor metadata, produce a list of room seeds for the specified floor.
+You are generating room seeds and the connection topology for an entire D&D 5e dungeon. Given the dungeon metadata and the list of floors, produce a list of room seeds for all floors, plus how those rooms are connected (including vertical connections between floors) and any special relationships between them.
 
 Each room seed has: name, purpose, atmosphere, construction_era, floor_level, is_entrance (bool), is_boss_room (bool), vertical_connection ("up" | "down" | "both" | null).
+
+There should be exactly one entrance room for the entire dungeon:
+- Only one room across all floors should have is_entrance=true.
+- The entrance must be on floor_level 0.
+- Floors above the entrance use positive floor_level values (1, 2, 3, ...).
+- Floors below the entrance use negative floor_level values (-1, -2, -3, ...).
+
+In addition, you must:
+- Define the connection topology between rooms on the same floor and between adjacent floors.
+- Define any special relationships between rooms, such as "lever in room A opens door in room B", "puzzle clues in room C unlock puzzle in room D", or "ritual started in room E has consequences in room F".
+
+Use these passage types for connections: DOOR, ARCHWAY, TUNNEL, CORRIDOR, LADDER, STAIRCASE, TRAPDOOR, CRACK, PORTAL.
+Length: "short", "medium", or "long".
+
+Vertical connections MUST be made concrete in the topology:
+- If a room has vertical_connection = "up", create at least one connection from that room to a room on floor_level + 1.
+- If a room has vertical_connection = "down", create at least one connection from that room to a room on floor_level - 1.
+- If a room has vertical_connection = "both", create at least one connection up and at least one connection down.
+- Make sure the "connections" list below includes these cross-floor links using from_room_name/to_room_name, and that the target room's floor_level reflects the correct level.
+
+Respect the requested number of rooms per floor as closely as possible. Distribute rooms across floors according to the provided floor metadata.
 
 Return ONLY valid JSON with no markdown. Use this exact shape:
 
@@ -16,6 +37,22 @@ Return ONLY valid JSON with no markdown. Use this exact shape:
       "is_boss_room": false,
       "vertical_connection": "up" | "down" | "both" | null
     }}
+  ],
+  "connections": [
+    {{
+      "from_room_name": "string",
+      "to_room_name": "string",
+      "passage_type": "DOOR" | "ARCHWAY" | "TUNNEL" | "CORRIDOR" | "LADDER" | "STAIRCASE" | "TRAPDOOR" | "CRACK" | "PORTAL",
+      "length": "short" | "medium" | "long"
+    }}
+  ],
+  "relationships": [
+    {{
+      "type": "lever_opens_door" | "puzzle_chain" | "key_item_location" | "hazard_chain" | "narrative_callback" | "other",
+      "from_room_name": "string",
+      "to_room_name": "string",
+      "description": "string"
+    }}
   ]
 }}
 
@@ -23,9 +60,7 @@ Dungeon: {dungeon_name}
 Concept: {dungeon_concept}
 Level range: {level_range}
 
-Floor: {floor_name} (level_number={floor_level})
-Theme: {floor_theme}
-Room count: {room_count}
-Hazard summary: {hazard_summary}
+Floors (full dungeon plan; use this to decide floor_level values, themes, and room counts):
+{floors_json}
 
 ---

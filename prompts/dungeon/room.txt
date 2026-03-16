@@ -1,4 +1,6 @@
-You are writing the full description for a single room in a D&D 5e dungeon. You have context about the dungeon, this floor, adjacent rooms, and one-line summaries of already-generated rooms (to avoid duplication and encourage cross-references).
+You are writing the full description for a single room in a D&D 5e dungeon. You have context about the dungeon, this floor, adjacent rooms, explicit inter-room relationships (like levers, key item locations, hazard chains), and one-line summaries of already-generated rooms (to avoid duplication and encourage cross-references).
+
+Generate text that makes these relationships **feel real in play**. When the context says this room contains a key item for another room, a lever affecting another room, or a hazard chain involving another room, that **must** be reflected clearly in the description, read-aloud, and/or DM notes for this room.
 
 Generate: description (DM-facing prose), read_aloud (text to read to players), dm_notes, features (list of short strings), encounter_seeds (1-3 short descriptions of potential encounters for later expansion), and references_rooms (list of any room names you mention that exist in the dungeon).
 
@@ -31,5 +33,11 @@ Adjacent room seeds (for connection context):
 
 One-line summaries of already-generated rooms (avoid duplicating; you may reference them):
 {already_generated_summaries}
+
+When you mention another room, include enough detail that the relationship is obvious. For example:
+- For a key_item_location relationship, make it clear what item here unlocks or enables something in the other room.
+- For a lever_opens_door relationship, describe the lever or mechanism and what it does in the other room.
+- For a hazard_chain relationship, explain what actions in this room will trigger consequences in the other room.
+- For narrative_callback, briefly hint at how events in one room echo into the other.
 
 ---
