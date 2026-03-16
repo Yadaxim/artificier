@@ -31,8 +31,6 @@ def render_room_single() -> None:
         st.error("Room not found.")
         return
     room_not_generated = not (room.description or room.read_aloud)
-    if room_not_generated:
-        _render_generate_room_cta(manager, room)
     play_mode = get_mode() == "Play"
     if play_mode:
         _render_room_play(manager, room)
@@ -100,7 +98,6 @@ def _render_generate_room_cta(manager: WorldStateManager, room) -> None:
                     st.error(str(e))
     else:
         st.warning("Could not determine this room's dungeon. Open the room from the dungeon view and try again.")
-    st.divider()
 
 
 def _render_room_create(manager: WorldStateManager, room) -> None:
@@ -109,29 +106,9 @@ def _render_room_create(manager: WorldStateManager, room) -> None:
     if room.is_entrance:
         parts.append("Entrance to the dungeon")
     st.caption(" · ".join(parts))
-    # Inline generate button when room has not been generated yet
+    # Generate panel when room has not been generated yet (blue panel, inline position)
     if not (room.description or room.read_aloud):
-        dungeon_id = get_selected_dungeon_id()
-        if not dungeon_id:
-            edges = manager.get_edges_to(room.id, EdgeType.CONTAINS)
-            if edges:
-                dungeon_id = edges[0].source_id
-        if dungeon_id:
-            if st.button("Generate room", key="room_single_generate_inline"):
-                with st.spinner("Generating room..."):
-                    try:
-                        all_rooms = manager.get_rooms_in_dungeon(dungeon_id)
-                        already_generated = [
-                            r.id
-                            for r in all_rooms
-                            if r.id != room.id and (r.description or r.read_aloud)
-                        ]
-                        generate_room(manager, dungeon_id, room.id, already_generated)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(str(e))
-        else:
-            st.warning("Could not determine this room's dungeon to generate it.")
+        _render_generate_room_cta(manager, room)
     st.write("**Description**")
     st.write(room.description or "(not generated yet)")
     st.write("**Read aloud**")

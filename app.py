@@ -30,6 +30,8 @@ inject_styles()
 campaign = get_campaign()
 title_suffix = f" · {campaign.name}" if campaign else ""
 st.title("Artificier" + title_suffix)
+if get_view_kind() == "room_single":
+    st.divider()
 
 # Sidebar: mode, navigation
 with st.sidebar:
