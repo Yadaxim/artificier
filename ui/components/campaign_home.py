@@ -10,10 +10,31 @@ def render_campaign_home() -> None:
     if not campaign:
         st.info("Select or create a campaign in the sidebar.")
         return
+    manager = get_manager()
     st.subheader(campaign.name)
     st.write(campaign.description or "(No description)")
-    st.caption(f"Party level: {campaign.party_level} · {campaign.setting_summary or ''}")
-    manager = get_manager()
+
+    col_pl, col_save = st.columns([1, 1])
+    with col_pl:
+        new_pl = st.number_input(
+            "Party level",
+            min_value=1,
+            max_value=20,
+            value=int(campaign.party_level or 1),
+            key="campaign_home_party_level",
+        )
+    with col_save:
+        st.markdown("&nbsp;")
+        if st.button("Save party level", key="campaign_home_save_pl"):
+            if new_pl != campaign.party_level:
+                campaign.party_level = int(new_pl)
+                manager.update_campaign(campaign)
+                st.success("Party level updated.")
+                st.rerun()
+
+    if campaign.setting_summary:
+        st.caption(campaign.setting_summary)
+
     dungeons = manager.get_dungeons_in_campaign(campaign.id)
     towns = manager.get_towns_in_campaign(campaign.id)
     npcs = manager.get_npcs_in_campaign(campaign.id)

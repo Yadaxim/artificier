@@ -9,7 +9,13 @@ from core.generation import interpret_dungeon
 from core.state_manager import WorldStateManager
 from models.models import Campaign, Dungeon, Edge, EdgeType
 
-from ui.state import get_campaign_id, get_manager, set_selected_dungeon_id, set_view_kind
+from ui.state import (
+    get_campaign,
+    get_campaign_id,
+    get_manager,
+    set_selected_dungeon_id,
+    set_view_kind,
+)
 
 
 def render_dungeon_form() -> None:
@@ -26,7 +32,15 @@ def _step_interpret(manager: WorldStateManager, campaign_id) -> None:
     st.subheader("Describe your dungeon")
     st.caption("After you click Interpret, the dungeon will be created and you will be taken directly to its view.")
     description = st.text_area("Free-text description", height=120, key="dungeon_description")
-    party_level = st.number_input("Party level", min_value=1, max_value=20, value=5, key="dungeon_party_level")
+    campaign = get_campaign()
+    default_pl = int(campaign.party_level) if campaign and campaign.party_level else 1
+    party_level = st.number_input(
+        "Party level",
+        min_value=1,
+        max_value=20,
+        value=default_pl,
+        key="dungeon_party_level",
+    )
     if st.button("Interpret with Claude"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
