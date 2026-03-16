@@ -236,6 +236,9 @@ class Monster(BaseNode):
     bonus_actions: list[dict[str, Any]] = Field(default_factory=list)
     reactions: list[dict[str, Any]] = Field(default_factory=list)
     legendary_actions: list[dict[str, Any]] = Field(default_factory=list)
+    spellcasting: Optional[str] = None
+    lair_actions: list[str] = Field(default_factory=list)
+    regional_effects: list[str] = Field(default_factory=list)
     description: str = ""
     tactics: str = ""
     status: MonsterStatus = MonsterStatus.ALIVE

@@ -582,9 +582,13 @@ def generate_npc_from_seed(manager: WorldStateManager, campaign_id: UUID, seed: 
     return npc
 
 
-def interpret_monster(text: str, party_level: int, context: str = "") -> tuple[dict, str]:
+def interpret_monster(text: str, challenge_rating: str, context: str = "") -> tuple[dict, str]:
     prompt_tpl = _load_prompt("entities/monster_interpret.txt")
-    prompt = prompt_tpl.format(party_level=party_level, context=context or "(none)", description=text or "(no description)")
+    prompt = prompt_tpl.format(
+        challenge_rating=challenge_rating,
+        context=context or "(none)",
+        description=text or "(no description)",
+    )
     return _call_entity_prompt(prompt)
 
 
@@ -600,12 +604,42 @@ def generate_monster_from_seed(manager: WorldStateManager, campaign_id: UUID, se
     manager.create_monster(monster)
     manager.add_edge(Edge(source_id=campaign_id, target_id=monster.id, edge_type=EdgeType.CONTAINS))
     prompt_tpl = _load_prompt("entities/monster_generate.txt")
-    prompt = prompt_tpl.format(seed_json=json.dumps(seed))
+    cr = str(seed.get("challenge_rating", "") or "").strip()
+    prompt = prompt_tpl.format(
+        seed_json=json.dumps(seed),
+        challenge_rating=cr or "(unspecified)",
+    )
     data, _, _ = _call_entity_prompt(prompt)
-    for key in ("name", "creature_type", "size", "alignment", "description", "tactics", "ability_scores", "armor_class",
-                "hit_points", "hit_points_avg", "speed", "skills", "saving_throws", "damage_resistances",
-                "damage_immunities", "condition_immunities", "senses", "languages", "challenge_rating",
-                "proficiency_bonus", "special_abilities", "actions", "bonus_actions", "reactions", "legendary_actions"):
+    for key in (
+        "name",
+        "creature_type",
+        "size",
+        "alignment",
+        "description",
+        "tactics",
+        "ability_scores",
+        "armor_class",
+        "hit_points",
+        "hit_points_avg",
+        "speed",
+        "skills",
+        "saving_throws",
+        "damage_resistances",
+        "damage_immunities",
+        "condition_immunities",
+        "senses",
+        "languages",
+        "challenge_rating",
+        "proficiency_bonus",
+        "special_abilities",
+        "actions",
+        "bonus_actions",
+        "reactions",
+        "legendary_actions",
+        "spellcasting",
+        "lair_actions",
+        "regional_effects",
+    ):
         if key in data and data[key] is not None:
             setattr(monster, key, data[key])
     manager.update_monster(monster)

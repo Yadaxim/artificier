@@ -1,4 +1,4 @@
-You are helping create a D&D 5e monster. Interpret the free-text into a structured seed. Party level helps with challenge.
+You are helping create a D&D 5e monster. Interpret the free-text into a structured seed. The target Challenge Rating (CR) helps set its difficulty.
 
 Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the monster's actual name:
 
@@ -11,7 +11,7 @@ Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the mo
   "tactics": "string"
 }}
 
-Party level: {party_level}
+Target Challenge Rating (CR): {challenge_rating}
 
 Context (if any): {context}
 

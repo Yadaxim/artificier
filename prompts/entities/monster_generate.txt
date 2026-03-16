@@ -1,4 +1,8 @@
-You are generating a full D&D 5e monster stat block (Monster Manual style) from a seed. Include ability_scores, armor_class, hit_points (dice expression string), hit_points_avg, speed, skills, saving_throws, damage_resistances, damage_immunities, condition_immunities, senses, languages, challenge_rating, proficiency_bonus, special_abilities (list of {name, description}), actions (list of {name, description, attack_bonus, damage}). Optionally bonus_actions, reactions, legendary_actions.
+You are generating a full D&D 5e monster stat block (Monster Manual style) from a seed. The target Challenge Rating (CR) should strongly guide overall difficulty and numbers.
+
+Target Challenge Rating (CR): {challenge_rating}
+
+Include ability_scores, armor_class, hit_points (dice expression string), hit_points_avg, speed, skills, saving_throws, damage_resistances, damage_immunities, condition_immunities, senses, languages, challenge_rating, proficiency_bonus, special_abilities (list of objects with fields \"name\" and \"description\"; include traits like Spellcasting or Innate Spellcasting here), actions (list of objects with fields \"name\", \"description\", \"attack_bonus\", and \"damage\"). Optionally bonus_actions, reactions, legendary_actions, lair_actions, and regional_effects when appropriate.
 
 Return ONLY valid JSON (no markdown).
 
@@ -26,6 +30,9 @@ Return ONLY valid JSON (no markdown).
   "bonus_actions": [],
   "reactions": [],
   "legendary_actions": [],
+  "spellcasting": "string (optional detailed spellcasting trait text, or null)",
+  "lair_actions": ["string", "..."],
+  "regional_effects": ["string", "..."],
   "description": "string",
   "tactics": "string"
 }}

@@ -1,9 +1,11 @@
 """Monster list and single view; create flow."""
 
+import json
 import traceback
 from uuid import UUID
 
 import streamlit as st
+from pydantic import ValidationError
 
 from core.generation import generate_monster_from_seed, interpret_monster
 from ui.state import (
@@ -75,10 +77,60 @@ def render_monster_single() -> None:
     st.write(monster.tactics or "(none)")
     with st.expander("Stat block"):
         st.write(f"AC {monster.armor_class}, HP {monster.hit_points} (avg {monster.hit_points_avg})")
-        st.write(f"Speed {monster.speed} · CR {monster.challenge_rating}")
+        st.write(f"Speed {monster.speed} · CR {monster.challenge_rating} · Prof bonus {monster.proficiency_bonus}")
+        spellcasting = getattr(monster, "spellcasting", None)
+        if spellcasting:
+            st.write("**Spellcasting**")
+            st.write(spellcasting)
+        if monster.saving_throws:
+            st.write("Saving throws:", ", ".join(monster.saving_throws))
+        if monster.skills:
+            st.write("Skills:", ", ".join(f"{k} {v}" for k, v in monster.skills.items()))
+        if monster.damage_resistances:
+            st.write("Damage resistances:", ", ".join(monster.damage_resistances))
+        if monster.damage_immunities:
+            st.write("Damage immunities:", ", ".join(monster.damage_immunities))
+        if monster.condition_immunities:
+            st.write("Condition immunities:", ", ".join(monster.condition_immunities))
+        if monster.senses:
+            st.write("Senses:", monster.senses)
+        if monster.languages:
+            st.write("Languages:", monster.languages)
         st.write("Ability scores:", monster.ability_scores)
+        special_abilities = getattr(monster, "special_abilities", None) or []
+        if special_abilities:
+            st.write("**Traits**")
+            for trait in special_abilities:
+                name = trait.get("name", "")
+                desc = trait.get("description", "")
+                st.write(f"- **{name}**: {desc}")
         for a in monster.actions or []:
             st.write(f"- **{a.get('name', '')}**: {a.get('description', '')}")
+        bonus_actions = getattr(monster, "bonus_actions", None) or []
+        if bonus_actions:
+            st.write("**Bonus Actions**")
+            for a in bonus_actions:
+                st.write(f"- **{a.get('name', '')}**: {a.get('description', '')}")
+        reactions = getattr(monster, "reactions", None) or []
+        if reactions:
+            st.write("**Reactions**")
+            for a in reactions:
+                st.write(f"- **{a.get('name', '')}**: {a.get('description', '')}")
+        legendary_actions = getattr(monster, "legendary_actions", None) or []
+        if legendary_actions:
+            st.write("**Legendary Actions**")
+            for a in legendary_actions:
+                st.write(f"- **{a.get('name', '')}**: {a.get('description', '')}")
+        lair_actions = getattr(monster, "lair_actions", None) or []
+        if lair_actions:
+            st.write("**Lair Actions**")
+            for text in lair_actions:
+                st.write(f"- {text}")
+        regional_effects = getattr(monster, "regional_effects", None) or []
+        if regional_effects:
+            st.write("**Regional Effects**")
+            for text in regional_effects:
+                st.write(f"- {text}")
     if st.button("Back to Monsters"):
         set_selected_monster_id(None)
         set_view_kind("monsters")
@@ -92,13 +144,21 @@ def render_monster_form() -> None:
         return
     manager = get_manager()
     st.subheader("Create Monster")
-    st.caption("After you click Interpret, the page will refresh and show the result below. If nothing appears, check for a red error or ensure ANTHROPIC_API_KEY is set.")
+    st.caption(
+        "After you click Interpret, the page will refresh and show the result below. "
+        "If nothing appears, check for a red error or ensure ANTHROPIC_API_KEY is set."
+    )
     description = st.text_area("Describe the monster", height=100, key="monster_desc")
-    party_level = st.number_input("Party level", min_value=1, max_value=20, value=5, key="monster_pl")
+    challenge_rating = st.text_input(
+        "Target Challenge Rating (CR)",
+        value="5",
+        help="Examples: 1/8, 1/2, 2, 5, 10",
+        key="monster_cr",
+    )
     if st.button("Interpret"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
-                result, raw_response, debug = interpret_monster(description, party_level)
+                result, raw_response, debug = interpret_monster(description, challenge_rating)
                 st.session_state["monster_interpret_result"] = result
                 st.session_state["monster_interpret_raw"] = raw_response
                 st.session_state["monster_interpret_debug"] = debug
@@ -135,16 +195,40 @@ def render_monster_form() -> None:
             st.text((raw or "")[:8000] + ("..." if len(raw or "") > 8000 else ""))
         name = st.text_input("Name", value=name_val, key="monster_seed_name")
         result["name"] = name
+        # Ensure the original target CR is kept on the seed so it can drive stat generation
+        result.setdefault("challenge_rating", challenge_rating)
         if st.button("Generate full stat block"):
             with st.spinner("Generating..."):
                 try:
-                    generate_monster_from_seed(manager, campaign_id, result)
-                    st.success("Monster created.")
+                    monster = generate_monster_from_seed(manager, campaign_id, result)
+                    st.success(f"Monster '{monster.name or '(unnamed)'}' created.")
                     st.session_state.pop("monster_interpret_result", None)
-                    set_view_kind("monsters")
+                    set_selected_monster_id(monster.id)
+                    set_view_kind("monster_single")
                     st.rerun()
+                except ValidationError as e:
+                    st.error(
+                        "Monster generation failed: the AI returned data that does not match "
+                        "the expected monster schema (likely in abilities or actions)."
+                    )
+                    with st.expander("Technical details (validation error)"):
+                        st.text(str(e))
+                        st.caption(
+                            "This usually means one of: special_abilities/actions are not a list of "
+                            "{name, description, ...} objects, or contain unexpected types."
+                        )
+                        st.json({"seed_keys": list(result.keys())})
+                except json.JSONDecodeError as e:
+                    st.error(
+                        "Monster generation failed: could not parse JSON from the AI response. "
+                        "Try again or simplify your monster description."
+                    )
+                    with st.expander("Technical details (JSON parse)"):
+                        st.text(str(e))
                 except Exception as e:
-                    st.error(str(e))
+                    st.error("Unexpected error while generating monster. See details below.")
+                    with st.expander("Technical details (unexpected error)"):
+                        st.text(repr(e))
     else:
         st.caption("No result yet. Click **Interpret** above. If you already clicked and still see this, an error may have occurred — check above for a red message.")
     if st.button("Cancel"):
