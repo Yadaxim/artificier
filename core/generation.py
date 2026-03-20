@@ -532,9 +532,9 @@ def _call_entity_prompt(prompt: str) -> tuple[dict, str, dict]:
     return data, raw, debug
 
 
-def interpret_npc(text: str, party_level: int, context: str = "") -> tuple[dict, str, dict]:
+def interpret_npc(text: str, context: str = "") -> tuple[dict, str, dict]:
     prompt_tpl = _load_prompt("entities/npc_interpret.txt")
-    prompt = prompt_tpl.format(party_level=party_level, context=context or "(none)", description=text or "(no description)")
+    prompt = prompt_tpl.format(context=context or "(none)", description=text or "(no description)")
     return _call_entity_prompt(prompt)
 
 

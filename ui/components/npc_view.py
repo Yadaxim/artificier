@@ -70,10 +70,24 @@ def render_npc_single() -> None:
         return
     st.subheader(npc.name)
     st.caption(f"{npc.race}" + (f" · {npc.character_class} {npc.level}" if npc.character_class else ""))
+    st.write("**Status**")
+    st.write(getattr(npc.status, "value", str(npc.status)))
+    st.write("**Faction**")
+    st.write(npc.faction or "(none)")
     st.write(npc.description)
     st.write("**Personality**")
     for p in npc.personality or []:
         st.write(f"- {p}")
+    st.write("**Motivations**")
+    for m in npc.motivations or []:
+        st.write(f"- {m}")
+    if not npc.motivations:
+        st.write("(none)")
+    st.write("**Secrets**")
+    for s in npc.secrets or []:
+        st.write(f"- {s}")
+    if not npc.secrets:
+        st.write("(none)")
     st.write("**Roleplaying notes**")
     st.write(npc.roleplaying_notes or "(none)")
     st.write("**Backstory**")
@@ -81,9 +95,13 @@ def render_npc_single() -> None:
     with st.expander("Stat block"):
         st.write(f"AC {npc.armor_class}, HP {npc.hit_points}, Speed {npc.speed}")
         st.write("Ability scores:", npc.ability_scores)
+        st.write("Saving throws:", npc.saving_throws)
         st.write("Skills:", npc.skills)
         for f in npc.features_and_traits or []:
             st.write(f"- {f}")
+        st.write("Equipment:", npc.equipment or [])
+        st.write("Spells:")
+        st.json(npc.spells if npc.spells is not None else {})
     if st.button("Back to NPCs"):
         set_selected_npc_id(None)
         set_view_kind("npcs")
@@ -99,11 +117,10 @@ def render_npc_form() -> None:
     st.subheader("Create NPC")
     st.caption("After you click Interpret, the page will refresh and show the result below. If nothing appears, check for a red error or ensure ANTHROPIC_API_KEY is set.")
     description = st.text_area("Describe the NPC", height=100, key="npc_desc")
-    party_level = st.number_input("Party level", min_value=1, max_value=20, value=5, key="npc_pl")
     if st.button("Interpret"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
-                result, raw_response, debug = interpret_npc(description, party_level)
+                result, raw_response, debug = interpret_npc(description)
                 st.session_state["npc_interpret_result"] = result
                 st.session_state["npc_interpret_raw"] = raw_response
                 st.session_state["npc_interpret_debug"] = debug
@@ -140,15 +157,78 @@ def render_npc_form() -> None:
             st.text((raw or "")[:8000] + ("..." if len(raw or "") > 8000 else ""))
         name = st.text_input("Name", value=name_val, key="npc_seed_name")
         race = st.text_input("Race", value=result.get("race", ""), key="npc_seed_race")
+        character_class = st.text_input(
+            "Class",
+            value=result.get("character_class") or "",
+            key="npc_seed_character_class",
+        )
+        level = st.number_input(
+            "Level",
+            min_value=1,
+            max_value=20,
+            value=int(result.get("level", 1) or 1),
+            key="npc_seed_level",
+        )
+        description_val = st.text_area(
+            "Description",
+            value=result.get("description", "") or "",
+            key="npc_seed_description",
+            height=90,
+        )
+        personality_val = st.text_area(
+            "Personality traits (one per line)",
+            value="\n".join(result.get("personality") or []),
+            key="npc_seed_personality",
+            height=90,
+        )
+        motivations_val = st.text_area(
+            "Motivations (one per line)",
+            value="\n".join(result.get("motivations") or []),
+            key="npc_seed_motivations",
+            height=90,
+        )
+        secrets_val = st.text_area(
+            "Secrets (one per line)",
+            value="\n".join(result.get("secrets") or []),
+            key="npc_seed_secrets",
+            height=90,
+        )
+        faction_val = st.text_input(
+            "Faction",
+            value=result.get("faction") or "",
+            key="npc_seed_faction",
+        )
+        roleplaying_notes_val = st.text_area(
+            "Roleplaying notes",
+            value=result.get("roleplaying_notes", "") or "",
+            key="npc_seed_roleplaying_notes",
+            height=100,
+        )
+        backstory_val = st.text_area(
+            "Backstory",
+            value=result.get("backstory", "") or "",
+            key="npc_seed_backstory",
+            height=120,
+        )
         result["name"] = name
         result["race"] = race
+        result["character_class"] = character_class.strip() or None
+        result["level"] = int(level)
+        result["description"] = description_val
+        result["personality"] = [x.strip() for x in personality_val.splitlines() if x.strip()]
+        result["motivations"] = [x.strip() for x in motivations_val.splitlines() if x.strip()]
+        result["secrets"] = [x.strip() for x in secrets_val.splitlines() if x.strip()]
+        result["faction"] = faction_val.strip() or None
+        result["roleplaying_notes"] = roleplaying_notes_val
+        result["backstory"] = backstory_val
         if st.button("Generate full NPC"):
             with st.spinner("Generating..."):
                 try:
-                    generate_npc_from_seed(manager, campaign_id, result)
+                    npc = generate_npc_from_seed(manager, campaign_id, result)
                     st.success("NPC created.")
                     st.session_state.pop("npc_interpret_result", None)
-                    set_view_kind("npcs")
+                    set_selected_npc_id(npc.id)
+                    set_view_kind("npc_single")
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))

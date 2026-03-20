@@ -1,4 +1,4 @@
-You are helping create a D&D 5e NPC. Interpret the free-text description into a structured seed. Party level helps scale the NPC.
+You are helping create a D&D 5e NPC. Interpret the free-text description into a structured seed.
 
 Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the NPC's actual name, not the word "name":
 
@@ -15,8 +15,6 @@ Return ONLY valid JSON (no markdown). Use concrete values; "name" must be the NP
   "secrets": ["string"],
   "faction": "string or null"
 }}
-
-Party level: {party_level}
 
 Context (if any): {context}
 
