@@ -25,6 +25,16 @@ def render_dungeons_list() -> None:
     if not campaign_id:
         st.info("Select a campaign to see dungeons.")
         return
+    title_col, action_col = st.columns([6, 1])
+    with title_col:
+        st.subheader("Dungeons")
+    with action_col:
+        if st.button("+", key="dungeons_list_new", help="New dungeon", use_container_width=True):
+            set_view_kind("dungeon_new")
+            st.session_state.pop("dungeon_form_step", None)
+            st.session_state.pop("dungeon_interpret_result", None)
+            st.session_state.pop("dungeon_id_created", None)
+            st.rerun()
     dungeons = manager.get_dungeons_in_campaign(campaign_id)
     dungeons = sorted(dungeons, key=lambda d: d.created_at, reverse=True)
     pending = get_pending_delete()

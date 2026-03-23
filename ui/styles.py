@@ -74,30 +74,48 @@ def inject_styles(theme: str = "Light") -> None:
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border-color: var(--art-border);
     }
-    .stButton > button {
-        background: var(--art-button-bg);
-        color: var(--art-button-text);
-        border: 1px solid var(--art-button-border);
+    .stButton > button,
+    button[kind="secondary"],
+    button[data-testid="baseButton-secondary"],
+    button[data-testid="stBaseButton-secondary"] {
+        background: var(--art-button-bg) !important;
+        color: var(--art-button-text) !important;
+        border: 1px solid var(--art-button-border) !important;
         border-radius: 8px;
     }
-    .stButton > button:hover {
-        background: var(--art-button-bg-hover);
-        border-color: var(--art-accent);
-        color: var(--art-button-text);
+    .stButton > button:hover,
+    button[kind="secondary"]:hover,
+    button[data-testid="baseButton-secondary"]:hover,
+    button[data-testid="stBaseButton-secondary"]:hover {
+        background: var(--art-button-bg-hover) !important;
+        border-color: var(--art-accent) !important;
+        color: var(--art-button-text) !important;
     }
-    .stButton > button:focus {
+    .stButton > button:focus,
+    .stButton > button:focus-visible,
+    button[kind="secondary"]:focus,
+    button[kind="secondary"]:focus-visible,
+    button[data-testid="baseButton-secondary"]:focus,
+    button[data-testid="baseButton-secondary"]:focus-visible,
+    button[data-testid="stBaseButton-secondary"]:focus,
+    button[data-testid="stBaseButton-secondary"]:focus-visible {
         box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--art-accent) 30%, transparent);
-        border-color: var(--art-accent);
+        border-color: var(--art-accent) !important;
+        color: var(--art-button-text) !important;
     }
-    .stButton > button[kind="primary"] {
-        background: var(--art-button-primary-bg);
-        color: var(--art-button-primary-text);
-        border: 1px solid var(--art-button-primary-bg);
+    .stButton > button[kind="primary"],
+    button[data-testid="baseButton-primary"],
+    button[data-testid="stBaseButton-primary"] {
+        background: var(--art-button-primary-bg) !important;
+        color: var(--art-button-primary-text) !important;
+        border: 1px solid var(--art-button-primary-bg) !important;
     }
-    .stButton > button[kind="primary"]:hover {
-        background: var(--art-button-primary-bg-hover);
-        border-color: var(--art-button-primary-bg-hover);
-        color: var(--art-button-primary-text);
+    .stButton > button[kind="primary"]:hover,
+    button[data-testid="baseButton-primary"]:hover,
+    button[data-testid="stBaseButton-primary"]:hover {
+        background: var(--art-button-primary-bg-hover) !important;
+        border-color: var(--art-button-primary-bg-hover) !important;
+        color: var(--art-button-primary-text) !important;
     }
     .artificier-card {
         border: 1px solid var(--art-border);

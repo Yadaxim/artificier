@@ -55,49 +55,75 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Navigate")
-    if st.button("Campaigns"):
-        set_view_kind("campaigns")
-        st.rerun()
+    c_list_col, c_new_col = st.columns([5, 1])
+    with c_list_col:
+        if st.button("Campaigns", use_container_width=True):
+            set_view_kind("campaigns")
+            st.rerun()
+    with c_new_col:
+        if st.button("+", key="nav_new_campaign", help="New campaign", use_container_width=True):
+            st.session_state["campaign_list_create_first"] = True
+            set_view_kind("campaigns")
+            st.rerun()
     if get_campaign_id():
-        if st.button("Dungeons"):
-            set_view_kind("dungeons")
-            st.rerun()
-        if st.button("New dungeon"):
-            set_view_kind("dungeon_new")
-            st.session_state.pop("dungeon_form_step", None)
-            st.session_state.pop("dungeon_interpret_result", None)
-            st.session_state.pop("dungeon_id_created", None)
-            st.rerun()
-        if st.button("Towns"):
-            set_view_kind("towns")
-            st.rerun()
-        if st.button("New town"):
-            set_view_kind("town_new")
-            st.session_state.pop("town_form_step", None)
-            st.session_state.pop("town_interpret_result", None)
-            st.session_state.pop("town_id_created", None)
-            st.rerun()
-        if st.button("NPCs"):
-            set_view_kind("npcs")
-            st.rerun()
-        if st.button("New NPC"):
-            set_view_kind("npc_new")
-            st.session_state.pop("npc_interpret_result", None)
-            st.rerun()
-        if st.button("Monsters"):
-            set_view_kind("monsters")
-            st.rerun()
-        if st.button("New Monster"):
-            set_view_kind("monster_new")
-            st.session_state.pop("monster_interpret_result", None)
-            st.rerun()
-        if st.button("Items"):
-            set_view_kind("items")
-            st.rerun()
-        if st.button("New Item"):
-            set_view_kind("item_new")
-            st.session_state.pop("item_interpret_result", None)
-            st.rerun()
+        d_list_col, d_new_col = st.columns([5, 1])
+        with d_list_col:
+            if st.button("Dungeons", use_container_width=True):
+                set_view_kind("dungeons")
+                st.rerun()
+        with d_new_col:
+            if st.button("+", key="nav_new_dungeon", help="New dungeon", use_container_width=True):
+                set_view_kind("dungeon_new")
+                st.session_state.pop("dungeon_form_step", None)
+                st.session_state.pop("dungeon_interpret_result", None)
+                st.session_state.pop("dungeon_id_created", None)
+                st.rerun()
+
+        t_list_col, t_new_col = st.columns([5, 1])
+        with t_list_col:
+            if st.button("Towns", use_container_width=True):
+                set_view_kind("towns")
+                st.rerun()
+        with t_new_col:
+            if st.button("+", key="nav_new_town", help="New town", use_container_width=True):
+                set_view_kind("town_new")
+                st.session_state.pop("town_form_step", None)
+                st.session_state.pop("town_interpret_result", None)
+                st.session_state.pop("town_id_created", None)
+                st.rerun()
+
+        n_list_col, n_new_col = st.columns([5, 1])
+        with n_list_col:
+            if st.button("NPCs", use_container_width=True):
+                set_view_kind("npcs")
+                st.rerun()
+        with n_new_col:
+            if st.button("+", key="nav_new_npc", help="New NPC", use_container_width=True):
+                set_view_kind("npc_new")
+                st.session_state.pop("npc_interpret_result", None)
+                st.rerun()
+
+        m_list_col, m_new_col = st.columns([5, 1])
+        with m_list_col:
+            if st.button("Monsters", use_container_width=True):
+                set_view_kind("monsters")
+                st.rerun()
+        with m_new_col:
+            if st.button("+", key="nav_new_monster", help="New monster", use_container_width=True):
+                set_view_kind("monster_new")
+                st.session_state.pop("monster_interpret_result", None)
+                st.rerun()
+
+        i_list_col, i_new_col = st.columns([5, 1])
+        with i_list_col:
+            if st.button("Items", use_container_width=True):
+                set_view_kind("items")
+                st.rerun()
+        with i_new_col:
+            if st.button("+", key="nav_new_item", help="New item", use_container_width=True):
+                set_view_kind("item_new")
+                st.session_state.pop("item_interpret_result", None)
+                st.rerun()
 
 # Main panel
 view = get_view_kind()

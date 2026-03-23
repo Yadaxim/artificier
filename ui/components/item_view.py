@@ -24,6 +24,14 @@ def render_items_list() -> None:
     if not campaign_id:
         st.info("Select a campaign.")
         return
+    title_col, action_col = st.columns([6, 1])
+    with title_col:
+        st.subheader("Items")
+    with action_col:
+        if st.button("+", key="items_list_new", help="New item", use_container_width=True):
+            set_view_kind("item_new")
+            st.session_state.pop("item_interpret_result", None)
+            st.rerun()
     items = manager.get_items_in_campaign(campaign_id)
     items = sorted(items, key=lambda i: i.created_at, reverse=True)
     pending = get_pending_delete()
@@ -58,12 +66,6 @@ def render_items_list() -> None:
                         set_pending_delete("item", it.id, it.name, "")
                         st.rerun()
             st.divider()
-    if st.button("Create Item"):
-        set_view_kind("item_new")
-        st.session_state.pop("item_interpret_result", None)
-        st.rerun()
-
-
 def render_item_single() -> None:
     item_id = get_selected_item_id()
     if not item_id:

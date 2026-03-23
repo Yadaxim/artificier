@@ -24,6 +24,14 @@ def render_npcs_list() -> None:
     if not campaign_id:
         st.info("Select a campaign.")
         return
+    title_col, action_col = st.columns([6, 1])
+    with title_col:
+        st.subheader("NPCs")
+    with action_col:
+        if st.button("+", key="npcs_list_new", help="New NPC", use_container_width=True):
+            set_view_kind("npc_new")
+            st.session_state.pop("npc_interpret_result", None)
+            st.rerun()
     npcs = manager.get_npcs_in_campaign(campaign_id)
     npcs = sorted(npcs, key=lambda n: n.created_at, reverse=True)
     pending = get_pending_delete()
@@ -58,12 +66,6 @@ def render_npcs_list() -> None:
                         set_pending_delete("npc", n.id, n.name, "")
                         st.rerun()
             st.divider()
-    if st.button("Create NPC"):
-        set_view_kind("npc_new")
-        st.session_state.pop("npc_interpret_result", None)
-        st.rerun()
-
-
 def render_npc_single() -> None:
     npc_id = get_selected_npc_id()
     if not npc_id:

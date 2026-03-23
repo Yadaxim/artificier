@@ -20,8 +20,24 @@ def render_campaigns_list() -> None:
     manager = get_manager()
     existing_ids = manager.list_campaign_ids()
     pending = get_pending_delete()
+    create_first = bool(st.session_state.pop("campaign_list_create_first", False))
 
     st.subheader("Campaigns")
+    if create_first:
+        st.subheader("New campaign")
+        new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
+        new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="campaign_list_new_pl")
+        if st.button("Create campaign", key="campaign_list_create") and new_name and new_name.strip():
+            from models.models import Campaign
+
+            c = Campaign(name=new_name.strip(), party_level=int(new_pl))
+            manager.ensure_loaded(c.id)
+            manager.create_campaign(c)
+            set_campaign_id(c.id)
+            set_view_kind("campaign_home")
+            st.rerun()
+        st.divider()
+
     if not existing_ids:
         st.info("No campaigns yet. Create one below.")
     else:
@@ -65,15 +81,16 @@ def render_campaigns_list() -> None:
                         st.rerun()
             st.divider()
 
-    st.subheader("New campaign")
-    new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
-    new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="campaign_list_new_pl")
-    if st.button("Create campaign", key="campaign_list_create") and new_name and new_name.strip():
-        from models.models import Campaign
+    if not create_first:
+        st.subheader("New campaign")
+        new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
+        new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="campaign_list_new_pl")
+        if st.button("Create campaign", key="campaign_list_create") and new_name and new_name.strip():
+            from models.models import Campaign
 
-        c = Campaign(name=new_name.strip(), party_level=int(new_pl))
-        manager.ensure_loaded(c.id)
-        manager.create_campaign(c)
-        set_campaign_id(c.id)
-        set_view_kind("campaign_home")
-        st.rerun()
+            c = Campaign(name=new_name.strip(), party_level=int(new_pl))
+            manager.ensure_loaded(c.id)
+            manager.create_campaign(c)
+            set_campaign_id(c.id)
+            set_view_kind("campaign_home")
+            st.rerun()

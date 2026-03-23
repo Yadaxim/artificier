@@ -26,6 +26,14 @@ def render_monsters_list() -> None:
     if not campaign_id:
         st.info("Select a campaign.")
         return
+    title_col, action_col = st.columns([6, 1])
+    with title_col:
+        st.subheader("Monsters")
+    with action_col:
+        if st.button("+", key="monsters_list_new", help="New monster", use_container_width=True):
+            set_view_kind("monster_new")
+            st.session_state.pop("monster_interpret_result", None)
+            st.rerun()
     monsters = manager.get_monsters_in_campaign(campaign_id)
     monsters = sorted(monsters, key=lambda m: m.created_at, reverse=True)
     pending = get_pending_delete()
@@ -60,12 +68,6 @@ def render_monsters_list() -> None:
                         set_pending_delete("monster", m.id, m.name, "")
                         st.rerun()
             st.divider()
-    if st.button("Create Monster"):
-        set_view_kind("monster_new")
-        st.session_state.pop("monster_interpret_result", None)
-        st.rerun()
-
-
 def render_monster_single() -> None:
     monster_id = get_selected_monster_id()
     if not monster_id:

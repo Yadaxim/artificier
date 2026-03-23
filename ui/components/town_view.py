@@ -23,6 +23,16 @@ def render_towns_list() -> None:
     if not campaign_id:
         st.info("Select a campaign to see towns.")
         return
+    title_col, action_col = st.columns([6, 1])
+    with title_col:
+        st.subheader("Towns")
+    with action_col:
+        if st.button("+", key="towns_list_new", help="New town", use_container_width=True):
+            set_view_kind("town_new")
+            st.session_state.pop("town_form_step", None)
+            st.session_state.pop("town_interpret_result", None)
+            st.session_state.pop("town_id_created", None)
+            st.rerun()
     towns = manager.get_towns_in_campaign(campaign_id)
     towns = sorted(towns, key=lambda t: t.created_at, reverse=True)
     pending = get_pending_delete()
