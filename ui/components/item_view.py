@@ -104,10 +104,8 @@ def render_item_form() -> None:
     if st.button("Interpret"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
-                result, raw_response, debug = interpret_item(description)
+                result = interpret_item(description)
                 st.session_state["item_interpret_result"] = result
-                st.session_state["item_interpret_raw"] = raw_response
-                st.session_state["item_interpret_debug"] = debug
                 st.rerun()
             except Exception as e:
                 st.error("Interpret failed — see details below.")
@@ -117,28 +115,7 @@ def render_item_form() -> None:
     if result:
         st.success("Interpret complete. Review the result below.")
         name_val = result.get("name", "") or ""
-        raw = st.session_state.get("item_interpret_raw", "")
-        debug = st.session_state.get("item_interpret_debug") or {}
-        st.info(f"**DEBUG (item)** — raw_len={debug.get('raw_len', len(raw))} | name_before_fix={debug.get('name_before_fix', 'N/A')} | name_after_fix={debug.get('name_after_fix', 'N/A')} | blocks={debug.get('content_block_count', '?')}")
-        with st.expander("Debug details (item)", expanded=True):
-            st.json({k: v for k, v in (debug or {}).items() if k != "block_info"})
-            if debug.get("block_info"):
-                for b in debug["block_info"]:
-                    st.text(f"Block {b.get('index')}: type={b.get('type')} text_len={b.get('text_len')}")
-            st.caption("Raw (first 400):")
-            st.text(debug.get("raw_first_400", raw[:400] if raw else "(none)"))
-        st.markdown("---")
         st.write("**Review seed**")
-        name_looks_wrong = (
-            not name_val.strip()
-            or name_val.strip().lower() in ("name", '"name"', "'name'")
-            or ("name" in name_val.lower() and len(name_val.strip()) < 20 and '"' in name_val)
-            or name_val.strip() == ' "name"'
-        )
-        if name_looks_wrong:
-            st.warning("The name field looks like a placeholder. See DEBUG above.")
-        with st.expander("Full raw API response", expanded=name_looks_wrong):
-            st.text((raw or "")[:8000] + ("..." if len(raw or "") > 8000 else ""))
         name = st.text_input("Name", value=name_val, key="item_seed_name")
         result["name"] = name
         if st.button("Generate full item"):

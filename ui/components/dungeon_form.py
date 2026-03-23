@@ -44,7 +44,8 @@ def _step_interpret(manager: WorldStateManager, campaign_id) -> None:
     if st.button("Interpret with Claude"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
-                result, raw_response, debug = interpret_dungeon(description, party_level)
+        
+                result = interpret_dungeon(description, party_level)
                 name = result.get("name", "").strip() or "Unnamed Dungeon"
                 concept = result.get("concept", "")
                 tone = result.get("tone", "")

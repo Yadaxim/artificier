@@ -6,13 +6,6 @@ import re
 from pathlib import Path
 from uuid import UUID
 
-# Last raw API response text (for debugging when interpret shows wrong name)
-_last_interpret_raw: str = ""
-
-
-def get_last_interpret_raw() -> str:
-    return _last_interpret_raw
-
 from anthropic import Anthropic
 from models.models import (
     Dungeon,
@@ -147,11 +140,8 @@ def _get_response_text(response) -> tuple[str, list[dict]]:
     return result, block_info
 
 
-def interpret_dungeon(text: str, party_level: int) -> tuple[dict, str, dict]:
-    """
-    Interpret free-text dungeon description into structured seed.
-    Returns (data, raw_response, debug_info).
-    """
+def interpret_dungeon(text: str, party_level: int) -> dict:
+    """Interpret free-text dungeon description into structured seed."""
     prompt_tpl = _load_prompt("dungeon/interpret.txt")
     prompt = prompt_tpl.format(party_level=party_level, description=text or "(no description)")
     client = _get_client()
@@ -160,31 +150,16 @@ def interpret_dungeon(text: str, party_level: int) -> tuple[dict, str, dict]:
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    raw, block_info = _get_response_text(response)
+    raw, _ = _get_response_text(response)
     raw = raw or "{}"
-    global _last_interpret_raw
-    _last_interpret_raw = raw
     cleaned = _clean_json(raw)
     data = json.loads(cleaned)
-    name_before = repr(data.get("name")) if isinstance(data, dict) else "N/A"
     if isinstance(data, str):
         data = json.loads(data)
     if not isinstance(data, dict):
         raise ValueError("Interpret response was not a JSON object")
     _fix_placeholder_name(data, cleaned)
-    name_after = repr(data.get("name"))
-    debug = {
-        "content_block_count": len(response.content),
-        "block_info": block_info,
-        "raw_len": len(raw),
-        "raw_first_400": raw[:400],
-        "cleaned_len": len(cleaned),
-        "cleaned_first_400": cleaned[:400],
-        "parsed_keys": list(data.keys()) if isinstance(data, dict) else [],
-        "name_before_fix": name_before,
-        "name_after_fix": name_after,
-    }
-    return data, raw, debug
+    return data
 
 
 def seed_dungeon_rooms(
@@ -374,8 +349,8 @@ def generate_room(
 # --- Town generation ---
 
 
-def interpret_town(text: str, party_level: int) -> tuple[dict, str, dict]:
-    """Interpret free-text town description. Returns (data, raw, debug)."""
+def interpret_town(text: str, party_level: int) -> dict:
+    """Interpret free-text town description."""
     prompt_tpl = _load_prompt("town/interpret.txt")
     prompt = prompt_tpl.format(party_level=party_level, description=text or "(no description)")
     client = _get_client()
@@ -384,31 +359,16 @@ def interpret_town(text: str, party_level: int) -> tuple[dict, str, dict]:
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    raw, block_info = _get_response_text(response)
+    raw, _ = _get_response_text(response)
     raw = raw or "{}"
-    global _last_interpret_raw
-    _last_interpret_raw = raw
     cleaned = _clean_json(raw)
     data = json.loads(cleaned)
-    name_before = repr(data.get("name")) if isinstance(data, dict) else "N/A"
     if isinstance(data, str):
         data = json.loads(data)
     if not isinstance(data, dict):
         raise ValueError("Interpret response was not a JSON object")
     _fix_placeholder_name(data, cleaned)
-    name_after = repr(data.get("name"))
-    debug = {
-        "content_block_count": len(response.content),
-        "block_info": block_info,
-        "raw_len": len(raw),
-        "raw_first_400": raw[:400],
-        "cleaned_len": len(cleaned),
-        "cleaned_first_400": cleaned[:400],
-        "parsed_keys": list(data.keys()),
-        "name_before_fix": name_before,
-        "name_after_fix": name_after,
-    }
-    return data, raw, debug
+    return data
 
 
 def seed_locations(
@@ -507,8 +467,6 @@ def _call_entity_prompt(prompt: str) -> tuple[dict, str, dict]:
     )
     raw, block_info = _get_response_text(response)
     raw = raw or "{}"
-    global _last_interpret_raw
-    _last_interpret_raw = raw
     cleaned = _clean_json(raw)
     data = json.loads(cleaned)
     name_before = repr(data.get("name")) if isinstance(data, dict) else "N/A"
@@ -532,10 +490,10 @@ def _call_entity_prompt(prompt: str) -> tuple[dict, str, dict]:
     return data, raw, debug
 
 
-def interpret_npc(text: str, context: str = "") -> tuple[dict, str, dict]:
+def interpret_npc(text: str, context: str = "") -> dict:
     prompt_tpl = _load_prompt("entities/npc_interpret.txt")
     prompt = prompt_tpl.format(context=context or "(none)", description=text or "(no description)")
-    return _call_entity_prompt(prompt)
+    return _call_entity_prompt(prompt)[0]
 
 
 def generate_npc_from_seed(manager: WorldStateManager, campaign_id: UUID, seed: dict) -> NPC:
@@ -582,14 +540,14 @@ def generate_npc_from_seed(manager: WorldStateManager, campaign_id: UUID, seed: 
     return npc
 
 
-def interpret_monster(text: str, challenge_rating: str, context: str = "") -> tuple[dict, str]:
+def interpret_monster(text: str, challenge_rating: str, context: str = "") -> dict:
     prompt_tpl = _load_prompt("entities/monster_interpret.txt")
     prompt = prompt_tpl.format(
         challenge_rating=challenge_rating,
         context=context or "(none)",
         description=text or "(no description)",
     )
-    return _call_entity_prompt(prompt)
+    return _call_entity_prompt(prompt)[0]
 
 
 def generate_monster_from_seed(manager: WorldStateManager, campaign_id: UUID, seed: dict) -> Monster:
@@ -646,10 +604,10 @@ def generate_monster_from_seed(manager: WorldStateManager, campaign_id: UUID, se
     return monster
 
 
-def interpret_item(text: str, context: str = "") -> tuple[dict, str]:
+def interpret_item(text: str, context: str = "") -> dict:
     prompt_tpl = _load_prompt("entities/item_interpret.txt")
     prompt = prompt_tpl.format(context=context or "(none)", description=text or "(no description)")
-    return _call_entity_prompt(prompt)
+    return _call_entity_prompt(prompt)[0]
 
 
 def generate_item_from_seed(manager: WorldStateManager, campaign_id: UUID, seed: dict) -> Item:

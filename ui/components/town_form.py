@@ -44,10 +44,8 @@ def _step_interpret(manager, campaign_id) -> None:
     if st.button("Interpret with Claude"):
         with st.spinner("Interpreting... (this may take 10–30 seconds)"):
             try:
-                result, raw_response, debug = interpret_town(description, party_level)
+                result = interpret_town(description, party_level)
                 st.session_state["town_interpret_result"] = result
-                st.session_state["town_interpret_raw"] = raw_response
-                st.session_state["town_interpret_debug"] = debug
                 st.session_state["town_form_step"] = 1
                 st.rerun()
             except Exception as e:
@@ -65,31 +63,7 @@ def _step_review_and_confirm(manager, campaign_id) -> None:
 
     st.success("Interpret complete. Review the result below.")
     name_val = result.get("name", "") or ""
-    raw = st.session_state.get("town_interpret_raw", "")
-    debug = st.session_state.get("town_interpret_debug") or {}
-    st.info(f"**DEBUG (town)** — raw_len={debug.get('raw_len', len(raw))} | name_before_fix={debug.get('name_before_fix', 'N/A')} | name_after_fix={debug.get('name_after_fix', 'N/A')} | blocks={debug.get('content_block_count', '?')}")
-    with st.expander("Debug details (town)", expanded=True):
-        st.json({k: v for k, v in (debug or {}).items() if k != "block_info"})
-        if debug.get("block_info"):
-            for b in debug["block_info"]:
-                st.text(f"Block {b.get('index')}: type={b.get('type')} text_len={b.get('text_len')}")
-        st.caption("Raw (first 400):")
-        st.text(debug.get("raw_first_400", raw[:400] if raw else "(none)"))
-    st.markdown("---")
     st.subheader("Review town seed")
-    name_looks_wrong = (
-        not name_val.strip()
-        or name_val.strip().lower() in ("name", '"name"', "'name'")
-        or ("name" in name_val.lower() and len(name_val.strip()) < 20 and '"' in name_val)
-        or name_val.strip() == ' "name"'
-    )
-    if name_looks_wrong:
-        st.warning("The name field looks like a placeholder. Edit it below or check the debug section.")
-    with st.expander("Debug: raw API response", expanded=name_looks_wrong):
-        if raw:
-            st.text(raw[:8000] + ("..." if len(raw) > 8000 else ""))
-        else:
-            st.caption("Click **Interpret with Claude** again to capture the API response.")
     name = st.text_input("Name", value=name_val, key="town_seed_name")
     concept = st.text_area("Concept", value=result.get("concept", ""), key="town_seed_concept")
     tone = st.text_input("Tone", value=result.get("tone", ""), key="town_seed_tone")
