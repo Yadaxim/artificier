@@ -30,27 +30,33 @@ def render_towns_list() -> None:
         st.info("No towns yet. Create one from the sidebar.")
         return
     for t in towns:
-        st.markdown(f"### {t.name}")
-        st.caption(f"{t.concept[:200]}..." if len(t.concept) > 200 else t.concept)
+        row_col, action1_col, action2_col = st.columns([6, 1, 1])
+        with row_col:
+            st.markdown(f"### {t.name}")
+            st.caption(f"{t.concept[:200]}..." if len(t.concept) > 200 else t.concept)
         if pending and pending.get("kind") == "town" and pending.get("id") == str(t.id):
             st.warning("Delete this town and all its locations?")
-            if st.button("Cancel", key=f"cancel_del_town_{t.id}"):
-                clear_pending_delete()
-                st.rerun()
-            if st.button("Yes, delete", key=f"confirm_del_town_{t.id}", type="primary"):
-                manager.delete_town(t.id)
-                if get_selected_town_id() == t.id:
-                    set_selected_town_id(None)
-                clear_pending_delete()
-                st.rerun()
+            with action1_col:
+                if st.button("Cancel", key=f"cancel_del_town_{t.id}"):
+                    clear_pending_delete()
+                    st.rerun()
+            with action2_col:
+                if st.button("Yes, delete", key=f"confirm_del_town_{t.id}", type="primary"):
+                    manager.delete_town(t.id)
+                    if get_selected_town_id() == t.id:
+                        set_selected_town_id(None)
+                    clear_pending_delete()
+                    st.rerun()
         else:
-            if st.button("View", key=f"view_town_{t.id}"):
-                set_selected_town_id(t.id)
-                set_view_kind("town_single")
-                st.rerun()
-            if st.button("Delete", key=f"del_town_{t.id}"):
-                set_pending_delete("town", t.id, t.name, "all its locations")
-                st.rerun()
+            with action1_col:
+                if st.button("View", key=f"view_town_{t.id}"):
+                    set_selected_town_id(t.id)
+                    set_view_kind("town_single")
+                    st.rerun()
+            with action2_col:
+                if st.button("Delete", key=f"del_town_{t.id}"):
+                    set_pending_delete("town", t.id, t.name, "all its locations")
+                    st.rerun()
         st.divider()
 
 

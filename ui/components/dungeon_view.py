@@ -32,31 +32,34 @@ def render_dungeons_list() -> None:
         st.info("No dungeons yet. Create one from the sidebar.")
         return
     for d in dungeons:
-        with st.container():
+        row_col, action1_col, action2_col = st.columns([6, 1, 1])
+        with row_col:
             st.markdown(f"### {d.name}")
             st.caption(f"{d.concept[:200]}..." if len(d.concept) > 200 else d.concept)
-            col1, col2 = st.columns([1, 3])
-            with col1:
-                if pending and pending.get("kind") == "dungeon" and pending.get("id") == str(d.id):
-                    st.warning("Delete this dungeon and all its rooms?")
-                    if st.button("Cancel", key=f"cancel_del_dungeon_{d.id}"):
-                        clear_pending_delete()
-                        st.rerun()
-                    if st.button("Yes, delete", key=f"confirm_del_dungeon_{d.id}", type="primary"):
-                        manager.delete_dungeon(d.id)
-                        if get_selected_dungeon_id() == d.id:
-                            set_selected_dungeon_id(None)
-                        clear_pending_delete()
-                        st.rerun()
-                else:
-                    if st.button("View", key=f"view_dungeon_{d.id}"):
-                        set_selected_dungeon_id(d.id)
-                        set_view_kind("dungeon_single")
-                        st.rerun()
-                    if st.button("Delete", key=f"del_dungeon_{d.id}"):
-                        set_pending_delete("dungeon", d.id, d.name, "all its rooms")
-                        st.rerun()
-            st.divider()
+        if pending and pending.get("kind") == "dungeon" and pending.get("id") == str(d.id):
+            st.warning("Delete this dungeon and all its rooms?")
+            with action1_col:
+                if st.button("Cancel", key=f"cancel_del_dungeon_{d.id}"):
+                    clear_pending_delete()
+                    st.rerun()
+            with action2_col:
+                if st.button("Yes, delete", key=f"confirm_del_dungeon_{d.id}", type="primary"):
+                    manager.delete_dungeon(d.id)
+                    if get_selected_dungeon_id() == d.id:
+                        set_selected_dungeon_id(None)
+                    clear_pending_delete()
+                    st.rerun()
+        else:
+            with action1_col:
+                if st.button("View", key=f"view_dungeon_{d.id}"):
+                    set_selected_dungeon_id(d.id)
+                    set_view_kind("dungeon_single")
+                    st.rerun()
+            with action2_col:
+                if st.button("Delete", key=f"del_dungeon_{d.id}"):
+                    set_pending_delete("dungeon", d.id, d.name, "all its rooms")
+                    st.rerun()
+        st.divider()
 
 
 def render_dungeon_single() -> None:

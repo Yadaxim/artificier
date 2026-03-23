@@ -33,26 +33,33 @@ def render_monsters_list() -> None:
         st.info("No monsters yet. Create one below.")
     else:
         for m in monsters:
-            st.write(f"**{m.name}** — {m.creature_type} {m.size}")
+            row_col, action1_col, action2_col = st.columns([6, 1, 1])
+            with row_col:
+                st.write(f"**{m.name}** — {m.creature_type} {m.size}")
             if pending and pending.get("kind") == "monster" and pending.get("id") == str(m.id):
                 st.warning("Delete this monster?")
-                if st.button("Cancel", key=f"cancel_del_monster_{m.id}"):
-                    clear_pending_delete()
-                    st.rerun()
-                if st.button("Yes, delete", key=f"confirm_del_monster_{m.id}", type="primary"):
-                    manager.delete_monster(m.id)
-                    if get_selected_monster_id() == m.id:
-                        set_selected_monster_id(None)
-                    clear_pending_delete()
-                    st.rerun()
+                with action1_col:
+                    if st.button("Cancel", key=f"cancel_del_monster_{m.id}"):
+                        clear_pending_delete()
+                        st.rerun()
+                with action2_col:
+                    if st.button("Yes, delete", key=f"confirm_del_monster_{m.id}", type="primary"):
+                        manager.delete_monster(m.id)
+                        if get_selected_monster_id() == m.id:
+                            set_selected_monster_id(None)
+                        clear_pending_delete()
+                        st.rerun()
             else:
-                if st.button("View", key=f"view_monster_{m.id}"):
-                    set_selected_monster_id(m.id)
-                    set_view_kind("monster_single")
-                    st.rerun()
-                if st.button("Delete", key=f"del_monster_{m.id}"):
-                    set_pending_delete("monster", m.id, m.name, "")
-                    st.rerun()
+                with action1_col:
+                    if st.button("View", key=f"view_monster_{m.id}"):
+                        set_selected_monster_id(m.id)
+                        set_view_kind("monster_single")
+                        st.rerun()
+                with action2_col:
+                    if st.button("Delete", key=f"del_monster_{m.id}"):
+                        set_pending_delete("monster", m.id, m.name, "")
+                        st.rerun()
+            st.divider()
     if st.button("Create Monster"):
         set_view_kind("monster_new")
         st.session_state.pop("monster_interpret_result", None)

@@ -31,26 +31,33 @@ def render_npcs_list() -> None:
         st.info("No NPCs yet. Create one below.")
     else:
         for n in npcs:
-            st.write(f"**{n.name}** — {n.race}" + (f" {n.character_class}" if n.character_class else ""))
+            row_col, action1_col, action2_col = st.columns([6, 1, 1])
+            with row_col:
+                st.write(f"**{n.name}** — {n.race}" + (f" {n.character_class}" if n.character_class else ""))
             if pending and pending.get("kind") == "npc" and pending.get("id") == str(n.id):
                 st.warning("Delete this NPC?")
-                if st.button("Cancel", key=f"cancel_del_npc_{n.id}"):
-                    clear_pending_delete()
-                    st.rerun()
-                if st.button("Yes, delete", key=f"confirm_del_npc_{n.id}", type="primary"):
-                    manager.delete_npc(n.id)
-                    if get_selected_npc_id() == n.id:
-                        set_selected_npc_id(None)
-                    clear_pending_delete()
-                    st.rerun()
+                with action1_col:
+                    if st.button("Cancel", key=f"cancel_del_npc_{n.id}"):
+                        clear_pending_delete()
+                        st.rerun()
+                with action2_col:
+                    if st.button("Yes, delete", key=f"confirm_del_npc_{n.id}", type="primary"):
+                        manager.delete_npc(n.id)
+                        if get_selected_npc_id() == n.id:
+                            set_selected_npc_id(None)
+                        clear_pending_delete()
+                        st.rerun()
             else:
-                if st.button("View", key=f"view_npc_{n.id}"):
-                    set_selected_npc_id(n.id)
-                    set_view_kind("npc_single")
-                    st.rerun()
-                if st.button("Delete", key=f"del_npc_{n.id}"):
-                    set_pending_delete("npc", n.id, n.name, "")
-                    st.rerun()
+                with action1_col:
+                    if st.button("View", key=f"view_npc_{n.id}"):
+                        set_selected_npc_id(n.id)
+                        set_view_kind("npc_single")
+                        st.rerun()
+                with action2_col:
+                    if st.button("Delete", key=f"del_npc_{n.id}"):
+                        set_pending_delete("npc", n.id, n.name, "")
+                        st.rerun()
+            st.divider()
     if st.button("Create NPC"):
         set_view_kind("npc_new")
         st.session_state.pop("npc_interpret_result", None)

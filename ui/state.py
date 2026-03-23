@@ -40,6 +40,14 @@ def set_mode(mode: str) -> None:
     st.session_state["mode"] = mode
 
 
+def get_theme() -> str:
+    return st.session_state.get("theme", "Dark")
+
+
+def set_theme(theme: str) -> None:
+    st.session_state["theme"] = theme
+
+
 def get_selected_dungeon_id() -> UUID | None:
     return st.session_state.get("selected_dungeon_id")
 

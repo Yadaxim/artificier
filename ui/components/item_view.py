@@ -31,26 +31,33 @@ def render_items_list() -> None:
         st.info("No items yet. Create one below.")
     else:
         for it in items:
-            st.write(f"**{it.name}** — {it.item_type.value} {it.rarity.value}")
+            row_col, action1_col, action2_col = st.columns([6, 1, 1])
+            with row_col:
+                st.write(f"**{it.name}** — {it.item_type.value} {it.rarity.value}")
             if pending and pending.get("kind") == "item" and pending.get("id") == str(it.id):
                 st.warning("Delete this item?")
-                if st.button("Cancel", key=f"cancel_del_item_{it.id}"):
-                    clear_pending_delete()
-                    st.rerun()
-                if st.button("Yes, delete", key=f"confirm_del_item_{it.id}", type="primary"):
-                    manager.delete_item(it.id)
-                    if get_selected_item_id() == it.id:
-                        set_selected_item_id(None)
-                    clear_pending_delete()
-                    st.rerun()
+                with action1_col:
+                    if st.button("Cancel", key=f"cancel_del_item_{it.id}"):
+                        clear_pending_delete()
+                        st.rerun()
+                with action2_col:
+                    if st.button("Yes, delete", key=f"confirm_del_item_{it.id}", type="primary"):
+                        manager.delete_item(it.id)
+                        if get_selected_item_id() == it.id:
+                            set_selected_item_id(None)
+                        clear_pending_delete()
+                        st.rerun()
             else:
-                if st.button("View", key=f"view_item_{it.id}"):
-                    set_selected_item_id(it.id)
-                    set_view_kind("item_single")
-                    st.rerun()
-                if st.button("Delete", key=f"del_item_{it.id}"):
-                    set_pending_delete("item", it.id, it.name, "")
-                    st.rerun()
+                with action1_col:
+                    if st.button("View", key=f"view_item_{it.id}"):
+                        set_selected_item_id(it.id)
+                        set_view_kind("item_single")
+                        st.rerun()
+                with action2_col:
+                    if st.button("Delete", key=f"del_item_{it.id}"):
+                        set_pending_delete("item", it.id, it.name, "")
+                        st.rerun()
+            st.divider()
     if st.button("Create Item"):
         set_view_kind("item_new")
         st.session_state.pop("item_interpret_result", None)

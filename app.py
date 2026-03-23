@@ -18,14 +18,16 @@ from ui.state import (
     get_campaign_id,
     get_manager,
     get_mode,
+    get_theme,
     get_view_kind,
     set_campaign_id,
     set_mode,
+    set_theme,
     set_view_kind,
 )
 from ui.styles import inject_styles
 
-inject_styles()
+inject_styles(get_theme())
 
 campaign = get_campaign()
 title_suffix = f" · {campaign.name}" if campaign else ""
@@ -40,8 +42,16 @@ with st.sidebar:
         manager.load_campaign(get_campaign_id())
 
     st.divider()
-    mode = st.radio("Mode", ["Create", "Play"], key="sidebar_mode", horizontal=True)
-    set_mode(mode)
+    mode_col, theme_col = st.columns(2)
+    with mode_col:
+        mode = st.radio("Mode", ["Create", "Play"], key="sidebar_mode", horizontal=True)
+        set_mode(mode)
+    with theme_col:
+        current_theme = get_theme()
+        theme = st.radio("Theme", ["Light", "Dark"], index=0 if current_theme == "Light" else 1, key="sidebar_theme")
+        if theme != current_theme:
+            set_theme(theme)
+            st.rerun()
 
     st.divider()
     st.subheader("Navigate")
@@ -49,9 +59,6 @@ with st.sidebar:
         set_view_kind("campaigns")
         st.rerun()
     if get_campaign_id():
-        if st.button("Campaign home"):
-            set_view_kind("campaign_home")
-            st.rerun()
         if st.button("Dungeons"):
             set_view_kind("dungeons")
             st.rerun()

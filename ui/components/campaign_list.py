@@ -35,36 +35,35 @@ def render_campaigns_list() -> None:
             name = c.name if c else "(Unnamed)"
             pl = c.party_level if c else 1
             summary = (c.setting_summary or "")[:120] if c else ""
-            with st.container():
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    st.markdown(f"**{name}**")
-                    st.caption(f"Party level {pl}" + (f" · {summary}" if summary else ""))
-                with col2:
-                    if pending and pending.get("kind") == "campaign" and pending.get("id") == str(cid):
-                        st.warning("Delete this campaign and all its dungeons, towns, NPCs, monsters, and items?")
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            if st.button("Cancel", key=f"cancel_del_campaign_{cid}"):
-                                clear_pending_delete()
-                                st.rerun()
-                        with c2:
-                            if st.button("Yes, delete", key=f"confirm_del_campaign_{cid}", type="primary"):
-                                manager.delete_campaign(cid)
-                                if get_campaign_id() == cid:
-                                    set_campaign_id(None)
-                                clear_pending_delete()
-                                set_view_kind("campaigns")
-                                st.rerun()
-                    else:
-                        if st.button("Select", key=f"select_campaign_{cid}"):
-                            set_campaign_id(cid)
-                            set_view_kind("campaign_home")
-                            st.rerun()
-                        if st.button("Delete", key=f"del_campaign_{cid}"):
-                            set_pending_delete("campaign", cid, name, "all dungeons, towns, NPCs, monsters, and items")
-                            st.rerun()
-                st.divider()
+            row_col, action1_col, action2_col = st.columns([6, 1, 1])
+            with row_col:
+                st.markdown(f"**{name}**")
+                st.caption(f"Party level {pl}" + (f" · {summary}" if summary else ""))
+            if pending and pending.get("kind") == "campaign" and pending.get("id") == str(cid):
+                st.warning("Delete this campaign and all its dungeons, towns, NPCs, monsters, and items?")
+                with action1_col:
+                    if st.button("Cancel", key=f"cancel_del_campaign_{cid}"):
+                        clear_pending_delete()
+                        st.rerun()
+                with action2_col:
+                    if st.button("Yes, delete", key=f"confirm_del_campaign_{cid}", type="primary"):
+                        manager.delete_campaign(cid)
+                        if get_campaign_id() == cid:
+                            set_campaign_id(None)
+                        clear_pending_delete()
+                        set_view_kind("campaigns")
+                        st.rerun()
+            else:
+                with action1_col:
+                    if st.button("Select", key=f"select_campaign_{cid}"):
+                        set_campaign_id(cid)
+                        set_view_kind("campaign_home")
+                        st.rerun()
+                with action2_col:
+                    if st.button("Delete", key=f"del_campaign_{cid}"):
+                        set_pending_delete("campaign", cid, name, "all dungeons, towns, NPCs, monsters, and items")
+                        st.rerun()
+            st.divider()
 
     st.subheader("New campaign")
     new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
