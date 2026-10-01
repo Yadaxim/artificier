@@ -104,8 +104,16 @@ def set_selected_item_id(item_id: UUID | None) -> None:
     st.session_state["selected_item_id"] = item_id
 
 
+def get_selected_plot_id() -> UUID | None:
+    return st.session_state.get("selected_plot_id")
+
+
+def set_selected_plot_id(plot_id: UUID | None) -> None:
+    st.session_state["selected_plot_id"] = plot_id
+
+
 def get_view_kind() -> str:
-    """One of: campaigns, campaign_home, dungeons, dungeon_new, dungeon_single, room_single, towns, town_new, town_single, location_single, npcs, npc_single, monsters, monster_single, items, item_single."""
+    """One of: campaigns, campaign_home, dungeons, dungeon_new, dungeon_single, room_single, towns, town_new, town_single, location_single, plots, plot_new, plot_single, npcs, npc_single, monsters, monster_single, items, item_single."""
     return st.session_state.get("view_kind", "campaigns")
 
 

@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 from core.state_manager import WorldStateManager
-from models.models import Campaign, Dungeon, Edge, EdgeType, Room
+from models.models import Campaign, Clue, Dungeon, Edge, EdgeType, Plot, PlotBeat, PlotBeatType, Room
 
 
 @pytest.fixture
@@ -67,3 +67,47 @@ def test_get_connections(manager):
     assert len(conns) == 1
     assert conns[0].target_id == r2.id
     assert conns[0].properties.get("passage_type") == "DOOR"
+
+
+def test_plot_and_clue_round_trip(manager):
+    campaign = Campaign(name="C", party_level=5)
+    manager.load_campaign(campaign.id)
+    manager.create_campaign(campaign)
+
+    plot = Plot(
+        title="Shadows in the Mill",
+        premise="A miller vanishes after midnight deliveries.",
+        beats=[
+            PlotBeat(
+                title="Missing Miller",
+                description="The party investigates the mill.",
+                trigger="Ask around town",
+                dm_notes="Point to the ledger",
+                beat_type=PlotBeatType.HOOK,
+            )
+        ],
+    )
+    manager.create_plot(plot)
+    manager.add_edge(Edge(source_id=campaign.id, target_id=plot.id, edge_type=EdgeType.CONTAINS))
+
+    clue = Clue(
+        content="A torn page names a secret buyer.",
+        how_found="DC 15 Investigation in the office",
+        plot_id=str(plot.id),
+        beat_title="Missing Miller",
+    )
+    manager.create_clue(clue)
+    manager.add_edge(Edge(source_id=plot.id, target_id=clue.id, edge_type=EdgeType.CONTAINS))
+
+    got_plots = manager.get_plots_in_campaign(campaign.id)
+    assert len(got_plots) == 1
+    assert got_plots[0].title == "Shadows in the Mill"
+
+    got_clues = manager.get_clues_in_plot(plot.id)
+    assert len(got_clues) == 1
+    assert got_clues[0].plot_id == str(plot.id)
+
+    manager.load_campaign(campaign.id)
+    reloaded_plot = manager.get_plot(plot.id)
+    assert reloaded_plot is not None
+    assert reloaded_plot.beats[0].beat_type == PlotBeatType.HOOK

@@ -7,6 +7,9 @@ from .models import (
     NPC,
     Monster,
     Item,
+    Plot,
+    PlotBeat,
+    Clue,
     Edge,
     EdgeType,
     WorldState,
@@ -18,6 +21,10 @@ from .models import (
     ItemType,
     ItemRarity,
     ItemStatus,
+    PlotBeatType,
+    PlotBeatStatus,
+    PlotType,
+    PlotStatus,
 )
 
 __all__ = [
@@ -29,6 +36,9 @@ __all__ = [
     "NPC",
     "Monster",
     "Item",
+    "Plot",
+    "PlotBeat",
+    "Clue",
     "Edge",
     "EdgeType",
     "WorldState",
@@ -40,4 +50,8 @@ __all__ = [
     "ItemType",
     "ItemRarity",
     "ItemStatus",
+    "PlotBeatType",
+    "PlotBeatStatus",
+    "PlotType",
+    "PlotStatus",
 ]

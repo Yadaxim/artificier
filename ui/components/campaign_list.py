@@ -26,11 +26,21 @@ def render_campaigns_list() -> None:
     if create_first:
         st.subheader("New campaign")
         new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
+        new_desc = st.text_area(
+            "Campaign description",
+            key="campaign_list_new_description",
+            placeholder="Describe the campaign premise, themes, and tone",
+            height=100,
+        )
         new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="campaign_list_new_pl")
         if st.button("Create campaign", key="campaign_list_create") and new_name and new_name.strip():
             from models.models import Campaign
 
-            c = Campaign(name=new_name.strip(), party_level=int(new_pl))
+            c = Campaign(
+                name=new_name.strip(),
+                description=(new_desc or "").strip(),
+                party_level=int(new_pl),
+            )
             manager.ensure_loaded(c.id)
             manager.create_campaign(c)
             set_campaign_id(c.id)
@@ -84,11 +94,21 @@ def render_campaigns_list() -> None:
     if not create_first:
         st.subheader("New campaign")
         new_name = st.text_input("Campaign name", key="campaign_list_new_name", placeholder="Enter name")
+        new_desc = st.text_area(
+            "Campaign description",
+            key="campaign_list_new_description",
+            placeholder="Describe the campaign premise, themes, and tone",
+            height=100,
+        )
         new_pl = st.number_input("Party level", min_value=1, max_value=20, value=5, key="campaign_list_new_pl")
         if st.button("Create campaign", key="campaign_list_create") and new_name and new_name.strip():
             from models.models import Campaign
 
-            c = Campaign(name=new_name.strip(), party_level=int(new_pl))
+            c = Campaign(
+                name=new_name.strip(),
+                description=(new_desc or "").strip(),
+                party_level=int(new_pl),
+            )
             manager.ensure_loaded(c.id)
             manager.create_campaign(c)
             set_campaign_id(c.id)

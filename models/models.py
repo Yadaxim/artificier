@@ -67,6 +67,37 @@ class ItemStatus(str, Enum):
     DESTROYED = "DESTROYED"
 
 
+class PlotBeatType(str, Enum):
+    HOOK = "HOOK"
+    RISING_ACTION = "RISING_ACTION"
+    COMPLICATION = "COMPLICATION"
+    CLIMAX = "CLIMAX"
+    RESOLUTION = "RESOLUTION"
+
+
+class PlotBeatStatus(str, Enum):
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETE = "COMPLETE"
+
+
+class PlotType(str, Enum):
+    INVESTIGATION = "INVESTIGATION"
+    HEIST = "HEIST"
+    ESCORT = "ESCORT"
+    PERSONAL_QUEST = "PERSONAL_QUEST"
+    DUNGEON_NARRATIVE = "DUNGEON_NARRATIVE"
+    FACTION_CONFLICT = "FACTION_CONFLICT"
+    OTHER = "OTHER"
+
+
+class PlotStatus(str, Enum):
+    INACTIVE = "INACTIVE"
+    ACTIVE = "ACTIVE"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class EdgeType(str, Enum):
     CONTAINS = "CONTAINS"
     CONNECTS_TO = "CONNECTS_TO"
@@ -74,6 +105,9 @@ class EdgeType(str, Enum):
     RELATED_TO = "RELATED_TO"
     GUARDS = "GUARDS"
     QUEST_INVOLVES = "QUEST_INVOLVES"
+    INVOLVES = "INVOLVES"
+    REQUIRES = "REQUIRES"
+    LEADS_TO = "LEADS_TO"
 
 
 # --- Base ---
@@ -270,6 +304,52 @@ class Item(BaseNode):
         return v
 
 
+# --- Plot ---
+
+
+class PlotBeat(BaseModel):
+    title: str = ""
+    description: str = ""
+    trigger: str = ""
+    dm_notes: str = ""
+    beat_type: PlotBeatType = PlotBeatType.HOOK
+    status: PlotBeatStatus = PlotBeatStatus.PENDING
+
+    @field_serializer("beat_type", "status")
+    def _serialize_enums(self, v):
+        if hasattr(v, "value"):
+            return v.value
+        return v
+
+
+class Plot(BaseNode):
+    title: str = ""
+    premise: str = ""
+    tone: str = ""
+    plot_type: PlotType = PlotType.OTHER
+    status: PlotStatus = PlotStatus.INACTIVE
+    party_level_range: str = ""
+    summary: str = ""
+    secret: str = ""
+    beats: list[PlotBeat] = Field(default_factory=list)
+    resolution_variants: list[str] = Field(default_factory=list)
+    world_consequences: list[str] = Field(default_factory=list)
+
+    @field_serializer("plot_type", "status")
+    def _serialize_enums(self, v):
+        if hasattr(v, "value"):
+            return v.value
+        return v
+
+
+class Clue(BaseNode):
+    content: str = ""
+    how_found: str = ""
+    is_discovered: bool = False
+    plot_id: str = ""
+    beat_title: str = ""
+
+
 # --- Edge ---
 
 
@@ -299,6 +379,8 @@ class WorldState(BaseModel):
     npcs: dict[str, NPC] = Field(default_factory=dict)
     monsters: dict[str, Monster] = Field(default_factory=dict)
     items: dict[str, Item] = Field(default_factory=dict)
+    plots: dict[str, Plot] = Field(default_factory=dict)
+    clues: dict[str, Clue] = Field(default_factory=dict)
     edges: dict[str, Edge] = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}

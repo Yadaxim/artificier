@@ -1,0 +1,57 @@
+You are helping a Dungeon Master design a campaign plot for a D&D-style game.
+
+Use the DM text, current party level, and the existing campaign summary.
+Root the plot in existing entities where possible. Keep required new entities minimal.
+Beats must escalate naturally from HOOK to RESOLUTION.
+The secret must be surprising but logically consistent with the premise.
+
+Return ONLY raw valid JSON. No markdown fences, no prose.
+
+Use this exact shape:
+{{
+  "title": "string",
+  "premise": "1-2 sentence premise",
+  "tone": "string",
+  "plot_type": "INVESTIGATION | HEIST | ESCORT | PERSONAL_QUEST | DUNGEON_NARRATIVE | FACTION_CONFLICT | OTHER",
+  "party_level_range": "string like levels 4-6",
+  "summary": "one paragraph DM summary",
+  "secret": "the hidden truth behind the plot",
+  "beats": [
+    {{
+      "title": "string",
+      "description": "seed description",
+      "trigger": "what starts this beat",
+      "dm_notes": "string",
+      "beat_type": "HOOK | RISING_ACTION | COMPLICATION | CLIMAX | RESOLUTION"
+    }}
+  ],
+  "resolution_variants": ["string"],
+  "world_consequences": ["string"],
+  "required_entities": [
+    {{ "entity_type": "NPC | Monster | Item | Dungeon | Town | Location", "description": "string", "name": "optional concrete name", "town_name": "if Location: parent town name exactly as in campaign summary" }}
+  ],
+  "suggested_links": [
+    {{ "entity_type": "NPC | Monster | Item | Dungeon | Town | Location", "entity_name": "exact existing name", "role": "string" }}
+  ]
+}}
+
+You may also use "involved_entities" with the same object shape as suggested_links (existing campaign ties). The app treats them the same as suggested_connections.
+
+Rules:
+- Provide 4-6 beats in order from HOOK to RESOLUTION.
+- Prefer suggested_links over required_entities when possible.
+- required_entities should include only essential missing entities.
+- If the campaign summary lists any NPCs, towns, dungeons, sub-locations, monsters, or items, you MUST fill suggested_links with at least 2 entries (up to 8) tying the plot to those existing names. Use entity_name EXACTLY as written in the summary (same spelling). Only use an empty suggested_links array when the summary truly has no named entities.
+- entity_type must be one of: NPC, MONSTER, ITEM, DUNGEON, TOWN, LOCATION (uppercase).
+
+Party level: {party_level}
+
+Campaign summary:
+---
+{campaign_summary}
+---
+
+DM plot idea:
+---
+{text}
+---

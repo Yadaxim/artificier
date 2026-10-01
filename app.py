@@ -10,6 +10,9 @@ from ui.components.location_view import render_location_single
 from ui.components.monster_view import render_monster_form, render_monsters_list, render_monster_single
 from ui.components.npc_view import render_npc_form, render_npcs_list, render_npc_single
 from ui.components.item_view import render_item_form, render_items_list, render_item_single
+from ui.components.plot_form import render_plot_form
+from ui.components.plot_list import render_plots_list
+from ui.components.plot_view import render_plot_single
 from ui.components.room_view import render_room_single
 from ui.components.town_form import render_town_form
 from ui.components.town_view import render_towns_list, render_town_single
@@ -92,6 +95,17 @@ with st.sidebar:
                 st.session_state.pop("town_id_created", None)
                 st.rerun()
 
+        p_list_col, p_new_col = st.columns([5, 1])
+        with p_list_col:
+            if st.button("Plots", use_container_width=True):
+                set_view_kind("plots")
+                st.rerun()
+        with p_new_col:
+            if st.button("+", key="nav_new_plot", help="New plot", use_container_width=True):
+                set_view_kind("plot_new")
+                st.session_state.pop("pending_plot", None)
+                st.rerun()
+
         n_list_col, n_new_col = st.columns([5, 1])
         with n_list_col:
             if st.button("NPCs", use_container_width=True):
@@ -147,6 +161,12 @@ elif view == "town_single":
     render_town_single()
 elif view == "location_single":
     render_location_single()
+elif view == "plots":
+    render_plots_list()
+elif view == "plot_new":
+    render_plot_form()
+elif view == "plot_single":
+    render_plot_single()
 elif view == "npcs":
     render_npcs_list()
 elif view == "npc_new":

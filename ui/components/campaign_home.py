@@ -12,7 +12,19 @@ def render_campaign_home() -> None:
         return
     manager = get_manager()
     st.subheader(campaign.name)
-    st.write(campaign.description or "(No description)")
+    new_desc = st.text_area(
+        "Campaign description",
+        value=campaign.description or "",
+        key=f"campaign_home_description_{campaign.id}",
+        height=120,
+        placeholder="Add campaign description",
+    )
+    if st.button("Save description", key="campaign_home_save_description"):
+        if (new_desc or "") != (campaign.description or ""):
+            campaign.description = (new_desc or "").strip()
+            manager.update_campaign(campaign)
+            st.success("Campaign description updated.")
+            st.rerun()
 
     col_pl, col_save = st.columns([1, 1])
     with col_pl:
@@ -40,8 +52,9 @@ def render_campaign_home() -> None:
     npcs = manager.get_npcs_in_campaign(campaign.id)
     monsters = manager.get_monsters_in_campaign(campaign.id)
     items = manager.get_items_in_campaign(campaign.id)
+    plots = manager.get_plots_in_campaign(campaign.id)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1:
         if st.button(f"🏰 Dungeons\n{len(dungeons)}", key="campaign_home_dungeons", use_container_width=True):
             set_view_kind("dungeons")
@@ -51,14 +64,18 @@ def render_campaign_home() -> None:
             set_view_kind("towns")
             st.rerun()
     with col3:
+        if st.button(f"🧭 Plots\n{len(plots)}", key="campaign_home_plots", use_container_width=True):
+            set_view_kind("plots")
+            st.rerun()
+    with col4:
         if st.button(f"👤 NPCs\n{len(npcs)}", key="campaign_home_npcs", use_container_width=True):
             set_view_kind("npcs")
             st.rerun()
-    with col4:
+    with col5:
         if st.button(f"👹 Monsters\n{len(monsters)}", key="campaign_home_monsters", use_container_width=True):
             set_view_kind("monsters")
             st.rerun()
-    with col5:
+    with col6:
         if st.button(f"⚔ Items\n{len(items)}", key="campaign_home_items", use_container_width=True):
             set_view_kind("items")
             st.rerun()

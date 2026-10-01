@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 
 from models.models import (
     Campaign,
+    Clue,
     Dungeon,
     Edge,
     EdgeType,
@@ -15,6 +16,7 @@ from models.models import (
     Location,
     Monster,
     NPC,
+    Plot,
     Room,
     Town,
     WorldState,
@@ -249,6 +251,46 @@ class WorldStateManager:
         self.save()
         return item
 
+    # --- Plot, Clue CRUD ---
+
+    def create_plot(self, plot: Plot) -> Plot:
+        self._ensure_state()
+        self._state.plots[_str_id(plot.id)] = plot
+        self.save()
+        return plot
+
+    def get_plot(self, plot_id: UUID) -> Plot | None:
+        self._ensure_state()
+        return self._state.plots.get(_str_id(plot_id))
+
+    def update_plot(self, plot: Plot) -> Plot:
+        self._ensure_state()
+        sid = _str_id(plot.id)
+        if sid not in self._state.plots:
+            raise KeyError(f"Plot {plot.id} not found")
+        self._state.plots[sid] = plot
+        self.save()
+        return plot
+
+    def create_clue(self, clue: Clue) -> Clue:
+        self._ensure_state()
+        self._state.clues[_str_id(clue.id)] = clue
+        self.save()
+        return clue
+
+    def get_clue(self, clue_id: UUID) -> Clue | None:
+        self._ensure_state()
+        return self._state.clues.get(_str_id(clue_id))
+
+    def update_clue(self, clue: Clue) -> Clue:
+        self._ensure_state()
+        sid = _str_id(clue.id)
+        if sid not in self._state.clues:
+            raise KeyError(f"Clue {clue.id} not found")
+        self._state.clues[sid] = clue
+        self.save()
+        return clue
+
     # --- Edges ---
 
     def add_edge(self, edge: Edge) -> Edge:
@@ -314,6 +356,10 @@ class WorldStateManager:
                 result.append(("monsters", e.target_id))
             elif tid in self._state.items:
                 result.append(("items", e.target_id))
+            elif tid in self._state.plots:
+                result.append(("plots", e.target_id))
+            elif tid in self._state.clues:
+                result.append(("clues", e.target_id))
         return result
 
     def get_connections(self, node_id: UUID, edge_type: EdgeType = EdgeType.CONNECTS_TO) -> list[Edge]:
@@ -373,6 +419,16 @@ class WorldStateManager:
         child_ids = [cid for coll, cid in self.get_children(campaign_id) if coll == "items"]
         return [self._state.items[_str_id(cid)] for cid in child_ids if _str_id(cid) in self._state.items]
 
+    def get_plots_in_campaign(self, campaign_id: UUID) -> list[Plot]:
+        self._ensure_state()
+        child_ids = [cid for coll, cid in self.get_children(campaign_id) if coll == "plots"]
+        return [self._state.plots[_str_id(cid)] for cid in child_ids if _str_id(cid) in self._state.plots]
+
+    def get_clues_in_plot(self, plot_id: UUID) -> list[Clue]:
+        self._ensure_state()
+        child_ids = [cid for coll, cid in self.get_children(plot_id) if coll == "clues"]
+        return [self._state.clues[_str_id(cid)] for cid in child_ids if _str_id(cid) in self._state.clues]
+
     # --- Cascade deletes ---
 
     def delete_room(self, room_id: UUID) -> None:
@@ -421,6 +477,20 @@ class WorldStateManager:
         self._state.items.pop(_str_id(item_id), None)
         self.save()
 
+    def delete_clue(self, clue_id: UUID) -> None:
+        self._ensure_state()
+        self._remove_edges_involving(clue_id)
+        self._state.clues.pop(_str_id(clue_id), None)
+        self.save()
+
+    def delete_plot(self, plot_id: UUID) -> None:
+        self._ensure_state()
+        for clue in self.get_clues_in_plot(plot_id):
+            self.delete_clue(clue.id)
+        self._remove_edges_involving(plot_id)
+        self._state.plots.pop(_str_id(plot_id), None)
+        self.save()
+
     def delete_campaign(self, campaign_id: UUID) -> None:
         """Delete campaign and all nested content (dungeons/rooms, towns/locations, npcs, monsters, items). Removes the campaign file."""
         self.load_campaign(campaign_id)
@@ -437,6 +507,8 @@ class WorldStateManager:
                 self.delete_monster(cid)
             elif coll == "items":
                 self.delete_item(cid)
+            elif coll == "plots":
+                self.delete_plot(cid)
         self._remove_edges_involving(campaign_id)
         self._state.campaigns.pop(_str_id(campaign_id), None)
         path = _campaign_path(campaign_id)

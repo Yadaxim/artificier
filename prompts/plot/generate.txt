@@ -1,0 +1,43 @@
+You are expanding a DM-approved plot seed into full, playable content.
+
+Return ONLY raw valid JSON. No markdown fences, no prose.
+
+Use this exact shape:
+{{
+  "title": "string",
+  "premise": "string",
+  "tone": "string",
+  "plot_type": "INVESTIGATION | HEIST | ESCORT | PERSONAL_QUEST | DUNGEON_NARRATIVE | FACTION_CONFLICT | OTHER",
+  "status": "INACTIVE | ACTIVE | COMPLETED | FAILED",
+  "party_level_range": "string",
+  "summary": "one paragraph DM summary",
+  "secret": "string",
+  "beats": [
+    {{
+      "title": "string",
+      "description": "2-3 paragraphs",
+      "trigger": "string",
+      "dm_notes": "DM guidance",
+      "beat_type": "HOOK | RISING_ACTION | COMPLICATION | CLIMAX | RESOLUTION",
+      "status": "PENDING | IN_PROGRESS | COMPLETE"
+    }}
+  ],
+  "resolution_variants": ["string"],
+  "world_consequences": ["string"]
+}}
+
+Rules:
+- Keep beat order coherent and escalating.
+- Each beat description should be actionable at the table.
+- resolution_variants must differ meaningfully in outcomes.
+- world_consequences should reference specific existing campaign entities where possible.
+
+Campaign summary:
+---
+{campaign_summary}
+---
+
+Plot seed JSON:
+---
+{plot_seed}
+---

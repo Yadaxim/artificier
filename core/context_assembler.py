@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from core.state_manager import WorldStateManager
-from models.models import Dungeon, EdgeType, Location, Room
+from models.models import EdgeType, PlotStatus
 
 
 def get_dungeon_context(manager: WorldStateManager, dungeon_id: UUID) -> dict:
@@ -141,3 +141,89 @@ def get_location_context_for_generation(
     ctx["location_type"] = location.location_type
     ctx["already_generated_summaries"] = get_location_seed_summaries(manager, already_generated_location_ids)
     return ctx
+
+
+def get_campaign_summary(manager: WorldStateManager, campaign_id: UUID) -> str:
+    """Compact campaign summary for plot prompts, capped to a short token budget."""
+    campaign = manager.get_campaign(campaign_id)
+    if not campaign:
+        return "Campaign not found."
+
+    lines: list[str] = []
+    lines.append(f"Campaign: {campaign.name}")
+    lines.append(f"Party level: {campaign.party_level}")
+    if campaign.setting_summary:
+        lines.append(f"Setting: {campaign.setting_summary}")
+
+    npcs = manager.get_npcs_in_campaign(campaign_id)
+    lines.append("NPCs:")
+    if npcs:
+        for npc in npcs:
+            location_name = ""
+            for edge in manager.get_edges_to(npc.id, EdgeType.CONTAINS):
+                loc = manager.get_location(edge.source_id)
+                if loc:
+                    location_name = loc.name
+                    break
+            brief = npc.description.strip().split(".")[0].strip() if npc.description else "No description"
+            where = f" @ {location_name}" if location_name else ""
+            lines.append(f"- {npc.name}: {brief}{where}")
+    else:
+        lines.append("- (none)")
+
+    lines.append("Locations:")
+    dungeons = manager.get_dungeons_in_campaign(campaign_id)
+    towns = manager.get_towns_in_campaign(campaign_id)
+    if dungeons:
+        for dungeon in dungeons:
+            status = dungeon.status.value if hasattr(dungeon.status, "value") else str(dungeon.status)
+            lines.append(f"- {dungeon.name} [dungeon] status={status}")
+    if towns:
+        for town in towns:
+            lines.append(f"- {town.name} [town] status=ESTABLISHED")
+            for loc in manager.get_locations_in_town(town.id):
+                lines.append(f"- {loc.name} [location] status=UNKNOWN")
+    if not dungeons and not towns:
+        lines.append("- (none)")
+
+    plots = manager.get_plots_in_campaign(campaign_id)
+    lines.append("Plots (active/completed):")
+    kept = [
+        p for p in plots
+        if p.status in (PlotStatus.ACTIVE, PlotStatus.COMPLETED)
+    ]
+    if kept:
+        for plot in kept:
+            premise = plot.premise.strip().split(".")[0].strip() if plot.premise else ""
+            lines.append(f"- {plot.title}: {premise}")
+    else:
+        lines.append("- (none)")
+
+    monsters = manager.get_monsters_in_campaign(campaign_id)
+    lines.append("Monsters:")
+    if monsters:
+        for m in monsters:
+            brief = m.description.strip().split(".")[0].strip() if m.description else m.creature_type or "creature"
+            lines.append(f"- {m.name} [monster]: {brief}")
+    else:
+        lines.append("- (none)")
+
+    items = manager.get_items_in_campaign(campaign_id)
+    lines.append("Items:")
+    if items:
+        for it in items:
+            brief = it.description.strip().split(".")[0].strip() if it.description else it.item_type.value
+            lines.append(f"- {it.name} [item]: {brief}")
+    else:
+        lines.append("- (none)")
+
+    lines.append(
+        "For plot linking: use suggested_links with entity_type NPC|MONSTER|ITEM|DUNGEON|TOWN|LOCATION "
+        "and entity_name EXACTLY matching a name from the lists above (case-sensitive match to the name shown)."
+    )
+
+    summary = "\n".join(lines)
+    max_chars = 3600  # Roughly <600 tokens for compact plain text.
+    if len(summary) > max_chars:
+        summary = summary[: max_chars - 3].rstrip() + "..."
+    return summary
