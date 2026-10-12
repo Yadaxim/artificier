@@ -1,62 +1,53 @@
 # Artificier
 
-A D&D 5e campaign aide: create dungeons, towns, NPCs, monsters, and items with Claude. Interpret free text → review seed → generate full content. JSON-backed world state; graph-ready nodes and edges.
+A campaign aide for D&D 5e dungeon masters. You describe a dungeon, a town or a character in a sentence or two; Artificier turns that into a full, playable write-up and keeps everything it creates linked together as one world.
 
-## Setup
+I have been a DM for a long time. I built this tool for myself and my own campaigns.
 
-The project uses a Python virtual environment in `.venv` (already created with dependencies installed). Activate it before running or testing:
+**Status:** a working prototype, built in March 2026 and currently parked. Dungeons, towns, NPCs, monsters and items all generate end to end. Plot threads are unfinished and live on the `wip-plots` branch.
 
-```bash
-cd Artificier
-source .venv/bin/activate   # Linux/macOS
-# or:  .venv\Scripts\activate   # Windows
-```
+## What it does
 
-If you need to recreate the venv or install dependencies:
+- **Dungeons.** Describe the idea. Artificier proposes a concept, history and floor plan, you correct it, and it then generates the rooms floor by floor: purpose, atmosphere, read-aloud text, DM notes, features and encounter seeds. Rooms are connected into a map, with an entrance and a boss room.
+- **Towns.** The same flow for settlements and their locations.
+- **NPCs, monsters and items.** Describe one, review the outline, generate the full stat block.
+- **One world, not loose pages.** Everything is a node in a graph (campaign, dungeon, room, town, location, NPC, monster, item) joined by typed edges. When a room is generated, the dungeon it belongs to, its floor and its neighbours are part of the prompt, so the results stay consistent with what already exists.
+- **Play mode.** Open a room at the table for its read-aloud text and DM notes, and record what happened there.
+
+## How generation works
+
+Every creation goes through the same three steps, so the model never writes the final content unsupervised:
+
+1. **Interpret.** Your free-text description becomes a structured seed.
+2. **Review.** You read the seed and change anything before it is used.
+3. **Generate.** The full content is written from the approved seed plus the surrounding world.
+
+## Run it
+
+Requires Python 3 and an Anthropic API key.
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-Set your Claude API key:
-
-```bash
 export ANTHROPIC_API_KEY=your_key_here
-```
-
-Or use Streamlit secrets (see [Streamlit docs](https://docs.streamlit.io/develop/concepts/configuration/secrets-management)).
-
-## Run
-
-With the venv activated:
-
-```bash
 streamlit run app.py
 ```
 
-## Tests
+The key can also be supplied through [Streamlit secrets](https://docs.streamlit.io/develop/concepts/configuration/secrets-management).
 
-With the venv activated:
+Tests:
 
 ```bash
 pytest tests/ -v
 ```
 
-## Structure
+## Layout
 
-- **models/** — Pydantic nodes (Campaign, Dungeon, Room, Town, Location, NPC, Monster, Item) and Edge, WorldState
-- **core/** — WorldStateManager (JSON load/save, CRUD, graph queries), context_assembler, generation (interpret/generate), topology
-- **prompts/** — Plain-text prompts with `{placeholders}` for dungeon, town, and entity flows
-- **ui/** — Streamlit state, styles, and components (campaign home, dungeon/town forms and views, room/location/NPC/monster/item views)
-- **data/campaigns/** — One JSON file per campaign (created on first save)
+- `models/` — Pydantic models for every node type, plus `Edge` and `WorldState`.
+- `core/` — `WorldStateManager` (JSON load and save, CRUD, graph queries), the context assembler that builds each prompt's view of the world, generation (interpret and generate), and dungeon topology.
+- `prompts/` — plain-text prompt templates for the dungeon, town and entity flows.
+- `ui/` — Streamlit state, styles and one component per view.
+- `data/campaigns/` — one JSON file per campaign, created on first save.
 
-## Create flow
-
-1. Create or select a campaign.
-2. **Dungeon**: Describe → interpret → review seed and floors → confirm → seed rooms per floor → generate topology → generate each room.
-3. **Town**: Describe → interpret → review → confirm → seed locations → generate each location.
-4. **NPC / Monster / Item**: Describe → interpret → review seed → generate full stat block.
-
-Play mode: open a room and use read-aloud, DM notes, and Record Event (events stored in room metadata).
+Built with Python, Streamlit, Pydantic and the Claude API.
